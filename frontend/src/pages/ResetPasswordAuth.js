@@ -24,17 +24,17 @@ export default function ResetPasswordAuth() {
             }).then(async (res) => {
                 const resJson = await res.json();
                 if (resJson.success === false) {
-                    setError('1' || resJson.message || 'Error resetting password');
+                    setError(resJson.message || 'Error resetting password');
                 }
             }).catch(err => {
-                setError('2' || err.message || 'Error resetting password');
+                setError(err.message || 'Error resetting password');
             }).finally(() => {
                 setLoading(false);
             });
         } else {
             setError('Invalid link');
         }
-    }, [resetPasswordAuthStr]);
+    }, []);
 
     return (
         <div>

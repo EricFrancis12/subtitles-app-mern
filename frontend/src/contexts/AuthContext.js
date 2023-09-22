@@ -19,6 +19,7 @@ export function AuthProvider({ children }) {
 
     function fetchUserClient() {
         if (loggedIn && !userClient && !fetchingUserClient) {
+            console.log('fetchingUserClient');
             fetchingUserClient = true;
             fetch('/user')
                 .then(async (res) => {
@@ -57,7 +58,7 @@ export function AuthProvider({ children }) {
             fetch(url, {
                 headers,
                 method,
-                body: JSON.stringify(body)
+                body: JSON.stringify(body),
             }).then(async (res) => {
                 const data = await res.json();
                 handleAuthEvent(data);
@@ -78,12 +79,16 @@ export function AuthProvider({ children }) {
         return await pingServer('/login', { email, password });
     }
 
-    async function logout() {
-        const prom = pingServer('/logout', {});
+    async function logout(signal) {
         Cookies.remove('loggedIn');
         setLoggedIn(false);
         setUserClient(null);
-        return await prom;
+        return await fetch('logout', {
+            headers: { 'Content-Type': 'application/json' },
+            method: 'POST',
+            body: '{}',
+            signal
+        });
     }
 
     async function initResetPassword(email) {

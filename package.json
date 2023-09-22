@@ -4,7 +4,7 @@
   "description": "MERN template using: - MongoDB - Express.js - React - Node.js",
   "main": "server.js",
   "scripts": {
-    "installDev":"node scripts/installDev.js",
+    "installDev": "node scripts/installDev.js",
     "build": "cd frontend && npm install && npm run build && cd ../",
     "start": "node server.js",
     "dev": "cd frontend && npm start && cd ../"

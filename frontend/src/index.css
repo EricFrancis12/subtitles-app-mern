@@ -1,0 +1,5 @@
+.input-hover:hover {
+    border: dashed black 2px;
+    background-color: rgba(236, 236, 236, 0.782);
+    cursor: pointer;
+}

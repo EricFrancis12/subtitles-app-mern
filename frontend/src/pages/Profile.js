@@ -3,8 +3,8 @@ import { Form, Button, Card, Alert } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 
-export default function UpdateProfile() {
-    const { changePassword, setUserClient } = useAuth();
+export default function Profile() {
+    const { changePassword, userClient } = useAuth();
 
     const passwordRef = useRef();
     const passwordConfirmRef = useRef();
@@ -42,8 +42,9 @@ export default function UpdateProfile() {
         <>
             <Card>
                 <Card.Body>
-                    <h2 className='text-center mb-4'>Update Profile</h2>
+                    <h2 className='text-center mb-4'>Profile</h2>
                     {error && <Alert variant='danger'>{error}</Alert>}
+                    <strong>Account Email:</strong> {userClient?.email}
                     <Form onSubmit={e => handleSubmit(e)}>
                         <Form.Group id='password'>
                             <Form.Label>Password</Form.Label>
@@ -58,7 +59,7 @@ export default function UpdateProfile() {
                 </Card.Body>
             </Card>
             <div className='w-100 text-center mt-2'>
-            <Link to='/'>Cancel</Link>
+                <Link to='/app'>Cancel</Link>
             </div>
         </>
     )

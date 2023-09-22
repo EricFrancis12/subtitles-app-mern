@@ -5,7 +5,10 @@ const router = express.Router();
 
 
 
-router.post('/', async (req, res) => {
+router.get('/', logout);
+router.post('/', logout);
+
+async function logout(req, res) {
     const session_id = User.getSession_id(req);
 
     res.clearCookie('loggedIn');
@@ -26,7 +29,7 @@ router.post('/', async (req, res) => {
     } catch (err) {
         console.error(err);
     }
-});
+}
 
 
 
