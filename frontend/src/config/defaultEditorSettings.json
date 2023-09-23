@@ -1,0 +1,16 @@
+{
+    "numLines": 1,
+    "numWordsPerLine": 1,
+    "font": "Georgia",
+    "fontSize": "14px",
+    "fontColor": "#70e26a",
+    "borderW": 3,
+    "borderColor": "#000000",
+    "backgroundColor": "transparent",
+    "positionX": 0,
+    "positionY": 0,
+    "bold": false,
+    "italic": false,
+    "underline": false,
+    "align": "center"
+}

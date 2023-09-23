@@ -1,0 +1,57 @@
+{
+    "numLines": [
+        1,
+        2,
+        3,
+        4
+    ],
+    "numWordsPerLine": [
+        1,
+        2,
+        3,
+        4,
+        5
+    ],
+    "font": [
+        "Georgia",
+        "Arial",
+        "Papyrus"
+    ],
+    "fontSize": [
+        "6px",
+        "8px",
+        "10px",
+        "12px",
+        "14px"
+    ],
+    "fontColor": null,
+    "borderW": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+    ],
+    "borderColor": null,
+    "backgroundColor": null,
+    "positionX": null,
+    "positionY": null,
+    "bold": [
+        true,
+        false
+    ],
+    "italic": [
+        true,
+        false
+    ],
+    "underline": [
+        true,
+        false
+    ],
+    "align": [
+        "left",
+        "center",
+        "right"
+    ]
+}

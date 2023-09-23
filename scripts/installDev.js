@@ -18,7 +18,9 @@ const path = require('path');
         `MONGODB_URI= #leave blank for running locally`,
         `MONGODB_URI_LOCAL=mongodb://127.0.0.1/${parentFolderName}`,
         `COOKIE_SECRET=${crypto.randomUUID()}`,
-        `BREVO_API_KEY=REPLACE`
+        ``,
+        `BREVO_API_KEY=REPLACE`,
+        `PICOVOICE_API_KEY=REPLACE`
     ];
 
     const dirsToMake = [

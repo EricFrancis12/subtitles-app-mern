@@ -43,16 +43,7 @@ export function VideoUploadProvider({ children }) {
         }
     }
 
-    async function transcribeVideo(formData) {
-        console.log(formData);
-        return fetch('/transctibe', {
-            headers: {
-
-            },
-            method: '',
-            body: ''
-        });
-    }
+    
 
     const value = {
         videoFile,
@@ -60,8 +51,7 @@ export function VideoUploadProvider({ children }) {
         handleFileUpload,
         videoInfo,
         setVideoInfo,
-        handleVideoLoaded,
-        transcribeVideo
+        handleVideoLoaded
     };
 
     return (

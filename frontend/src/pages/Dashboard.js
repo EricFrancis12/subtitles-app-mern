@@ -1,27 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Form, Card, Alert, Button } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Form, Card, Alert, Button, Spinner } from 'react-bootstrap';
+import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../contexts/AuthContext';
 import { useVideoUpload } from '../contexts/VideoUploadContext';
+import { useSubtitles } from '../contexts/SubtitlesContext';
+import { useEditor } from '../contexts/EditorContext';
+import defaultEditorSettings from '../config/defaultEditorSettings.json';
+import editorOptions from '../config/editorOptions.json';
 
 export default function Dashboard() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
     const [videoSrc, setVideoSrc] = useState('');
 
-    const { videoFile, setVideoFile, handleFileUpload, videoInfo, setVideoInfo, handleVideoLoaded, transcribeVideo } = useVideoUpload();
+    const navigate = useNavigate();
 
-    const languageOptions = ['English', 'Spanish', 'French'];
-    const numLinesoptions = ['1', '2', '3', '4'];
-    const numWordsPerLineOptions = ['1', '2', '3', '4', '5'];
+    const { userClient } = useAuth;
+    const { videoFile, setVideoFile, handleFileUpload, videoInfo, setVideoInfo, handleVideoLoaded } = useVideoUpload();
+    const { subtitlesData, setSubtitlesData, transcribeVideo } = useSubtitles();
+    const { editorSettings, setEditorSettings, applyEditorSettingsGlobally } = useEditor();
 
-    const [formData, setFormData] = useState({
-        language: languageOptions[0],
-        numLines: numLinesoptions[0],
-        numWordsPerLine: numWordsPerLineOptions[0]
-    });
+    const numLinesoptions = editorOptions.numLines;
+    const numWordsPerLineOptions = editorOptions.numWordsPerLine;
+
+    const defaultForm = {
+        numLines: userClient.defaultEditorSettings.numLines || defaultEditorSettings.numLines,
+        numWordsPerLine: userClient.defaultEditorSettings.numWordsPerLine || defaultEditorSettings.numWordsPerLine
+    };
+
+    const [formData, setFormData] = useState({ ...defaultForm });
 
     useEffect(() => {
         if (videoFile) {
@@ -36,15 +45,27 @@ export default function Dashboard() {
         try {
             setError('');
             setLoading(true);
-            setMessage('');
-            await transcribeVideo(formData);
-            setMessage('Video transcribed successfully');
+            await transcribeVideo(videoFile);
+            setEditorSettings({ ...editorSettings, numLines: formData.numLines, numWordsPerLine: formData.numWordsPerLine })
+            applyEditorSettingsGlobally();
+
+            navigate('/app/editor');
         } catch (err) {
             setError(err.message || 'Failed to transcribe video');
         }
 
         setLoading(false);
     }
+
+    function handleReset() {
+        setVideoFile(null);
+        setFormData({ ...defaultForm });
+    }
+
+    useEffect(() => {
+        console.log('running setFormData() because videoFile.name changed');
+        setFormData({ ...defaultForm });
+    }, [videoFile?.name]);
 
     return (
         <>
@@ -64,28 +85,30 @@ export default function Dashboard() {
                             <div>
                                 <h4>Options:</h4>
                                 <Form onSubmit={e => handleSubmit(e)}>
-                                    <Form.Group id='language'>
-                                        <Form.Label>Language</Form.Label>
-                                        <Form.Select onChange={(e) => setFormData({ ...formData, language: e.target.value })}>
-                                            {languageOptions.map((option, index) => <option key={index}>{option}</option>)}
-                                        </Form.Select>
-                                    </Form.Group>
-                                    <Form.Group id='numLines'>
-                                        <Form.Label>Number of Lines</Form.Label>
-                                        <Form.Select onChange={(e) => setFormData({ ...formData, numLines: e.target.value })}>
-                                            {numLinesoptions.map((option, index) => <option key={index}>{option}</option>)}
-                                        </Form.Select>
-                                    </Form.Group>
-                                    <Form.Group id='numWordsPerLine'>
-                                        <Form.Label>Number of Words Per Line</Form.Label>
-                                        <Form.Select onChange={(e) => setFormData({ ...formData, numWordsPerLine: e.target.value })}>
-                                            {numWordsPerLineOptions.map((option, index) => <option key={index}>{option}</option>)}
-                                        </Form.Select>
-                                    </Form.Group>
-                                    <Button disabled={loading} className='w-100 mt-4' type='submit'>Transcribe Video</Button>
+                                    {loading || subtitlesData
+                                        ? ''
+                                        : <>
+                                            <Form.Group id='numLines'>
+                                                <Form.Label>Number of Lines</Form.Label>
+                                                <Form.Select onChange={(e) => setFormData({ ...formData, numLines: e.target.value })}>
+                                                    {numLinesoptions.map((option, index) => <option key={index}>{option}</option>)}
+                                                </Form.Select>
+                                            </Form.Group>
+                                            <Form.Group id='numWordsPerLine'>
+                                                <Form.Label>Number of Words Per Line</Form.Label>
+                                                <Form.Select onChange={(e) => setFormData({ ...formData, numWordsPerLine: e.target.value })}>
+                                                    {numWordsPerLineOptions.map((option, index) => <option key={index}>{option}</option>)}
+                                                </Form.Select>
+                                            </Form.Group>
+                                        </>}
+                                    {loading
+                                        ? <Spinner />
+                                        : subtitlesData
+                                            ? <Link to='/app/editor'>Go to Editor</Link>
+                                            : <Button disabled={loading || subtitlesData} className='w-100 mt-4' type='submit'>Transcribe Video</Button>}
                                 </Form>
                             </div>
-                            <Button onClick={e => setVideoFile(null)} className='btn btn-brimary'>Reset</Button>
+                            <Button onClick={e => handleReset()} className='btn btn-brimary'>Reset</Button>
                         </div>
                     </Card.Body>
                     : <Card.Body style={{ height: '500px' }}>

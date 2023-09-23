@@ -9,6 +9,7 @@ const hash = 10;
 const mongoose = require('mongoose');
 
 const { frontendRootUrl } = require('../utils/utils');
+const defaultEditorSettings = require('../../frontend/src/config/defaultEditorSettings.json');
 
 
 
@@ -55,6 +56,64 @@ const UserSchema = new mongoose.Schema({
         UA: {
             type: String,
             default: ''
+        }
+    },
+    defaultEditorSettings: {
+        numLines: {
+            type: Number,
+            default: defaultEditorSettings.numLines
+        },
+        numWordsPerLine: {
+            type: Number,
+            default: defaultEditorSettings.numWordsPerLine
+        },
+        font: {
+            type: String,
+            default: defaultEditorSettings.font
+        },
+        fontSize: {
+            type: String,
+            default: defaultEditorSettings.fontSize
+        },
+        fontColor: {
+            type: String,
+            default: defaultEditorSettings.fontColor
+        },
+        borderW: {
+            type: Number,
+            default: defaultEditorSettings.borderW
+        },
+        borderColor: {
+            type: String,
+            default: defaultEditorSettings.borderColor
+        },
+        backgroundColor: {
+            type: String,
+            default: defaultEditorSettings.backgroundColor
+        },
+        positionX: {
+            type: Number,
+            default: defaultEditorSettings.positionX
+        },
+        positionY: {
+            type: Number,
+            default: defaultEditorSettings.positionY
+        },
+        bold: {
+            type: Boolean,
+            default: defaultEditorSettings.bold
+        },
+        italic: {
+            type: Boolean,
+            default: defaultEditorSettings.italic
+        },
+        underline: {
+            type: Boolean,
+            default: defaultEditorSettings.underline
+        },
+        align: {
+            type: String,
+            default: defaultEditorSettings.align
         }
     }
 });
