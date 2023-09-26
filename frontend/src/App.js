@@ -1,12 +1,11 @@
 import { VideoUploadProvider } from './contexts/VideoUploadContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { SubtitlesProvider } from './contexts/SubtitlesContext';
-import { EditorProvider } from './contexts/EditorContext';
+import { HistoryProvider } from './contexts/HistoryContext';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthLayout as A } from './layouts/AuthLayout';
 import { RegLayout as R } from './layouts/RegLayout';
 import Dashboard from './pages/Dashboard';
-import Editor from './pages/Editor';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Register from './pages/Register';
@@ -24,13 +23,12 @@ function App() {
         <VideoUploadProvider>
             <AuthProvider>
                 <SubtitlesProvider>
-                    <EditorProvider>
+                    <HistoryProvider>
                         <Router>
                             <Routes>
                                 <Route path='/' element={<R><Home /></R>} />
                                 <Route path='/app'>
                                     <Route path='' element={<A><Dashboard /></A>} />
-                                    <Route path='editor' element={<A><Editor /></A>} />
                                     <Route path='profile' element={<A><Profile /></A>} />
                                     <Route path='settings' element={<A><Settings /></A>} />
                                 </Route>
@@ -48,7 +46,7 @@ function App() {
                                 <Route path='/*' element={<R><NotFound /></R>} />
                             </Routes>
                         </Router>
-                    </EditorProvider>
+                    </HistoryProvider>
                 </SubtitlesProvider>
             </AuthProvider >
         </VideoUploadProvider>

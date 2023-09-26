@@ -1,4 +1,5 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
+import VideoInfo from '../models/VideoInfo';
 
 const VideoUploadContext = React.createContext();
 
@@ -22,28 +23,6 @@ export function VideoUploadProvider({ children }) {
         console.log(videoElement);
         setVideoInfo(new VideoInfo({ videoFile, videoElement }));
     }
-
-    class VideoInfo {
-        constructor(args) {
-            const { videoFile, videoElement } = args;
-
-            if (videoFile) {
-                this.name = videoFile.name;
-            }
-
-            if (videoElement) {
-                this.durSec = videoElement.duration;
-                this.durFormatted = formatTime(this.durSec);
-            }
-
-            function formatTime(durSec) {
-                // change this later to do proper formatting...
-                return durSec;
-            }
-        }
-    }
-
-    
 
     const value = {
         videoFile,

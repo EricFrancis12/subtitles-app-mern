@@ -1,5 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { useVideoUpload } from './VideoUploadContext';
+import defaultEditorSettings from '../config/defaultEditorSettings.json';
 
 const SubtitlesContext = React.createContext();
 
@@ -8,13 +10,15 @@ export function useSubtitles() {
 }
 
 export function SubtitlesProvider({ children }) {
-    const [subtitlesData, setSubtitlesData] = useState(null);
-
+    const { userClient } = useAuth();
     const { videoFile } = useVideoUpload();
 
+    const [subtitlesData, setSubtitlesData] = useState(null);
+    const [numLines, setNumLines] = useState(parseInt(userClient?.defaultEditorSettings?.numLines || defaultEditorSettings.numLines));
+    const [numWordsPerLine, setNumWordsPerLine] = useState(parseInt(userClient?.defaultEditorSettings?.numWordsPerLine || defaultEditorSettings.numWordsPerLine));
+
     useEffect(() => {
-        console.log('running setSubtitlesData() because videoFile.name changed');
-        setSubtitlesData(null)
+        setSubtitlesData(null);
     }, [videoFile?.name]);
 
     async function transcribeVideo() {
@@ -44,6 +48,10 @@ export function SubtitlesProvider({ children }) {
     const value = {
         subtitlesData,
         setSubtitlesData,
+        numLines,
+        setNumLines,
+        numWordsPerLine,
+        setNumWordsPerLine,
         transcribeVideo
     };
 
