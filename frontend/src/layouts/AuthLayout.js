@@ -16,7 +16,7 @@ export function AuthLayout({ children }) {
         ? <>
             <AppNavbar />
             <Container className='d-flex align-itmes-center justify-content-center' style={{ minHeight: '100vh' }}>
-                <div className='w-100' style={{ maxWidth: '400px' }}>
+                <div>
                     {children}
                 </div>
             </Container>

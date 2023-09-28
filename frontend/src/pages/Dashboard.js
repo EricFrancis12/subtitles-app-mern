@@ -7,6 +7,7 @@ import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { useVideoUpload } from '../contexts/VideoUploadContext';
 import { useSubtitles } from '../contexts/SubtitlesContext';
 import editorOptions from '../config/editorOptions.json';
+import { useHistory } from '../contexts/HistoryContext';
 
 export default function Dashboard() {
     const [error, setError] = useState('');
@@ -15,6 +16,7 @@ export default function Dashboard() {
 
     const { videoFile, setVideoFile, handleFileUpload, videoInfo, setVideoInfo, handleVideoLoaded } = useVideoUpload();
     const { subtitlesData, setSubtitlesData, numLines, setNumLines, numWordsPerLine, setNumWordsPerLine, transcribeVideo } = useSubtitles();
+    const { resetStacks } = useHistory();
 
     const numLinesOptions = editorOptions.numLines;
     const numWordsPerLineOptions = editorOptions.numWordsPerLine;
@@ -62,6 +64,7 @@ export default function Dashboard() {
     function handleReset() {
         setVideoFile(null);
         setFormData({ ...defaultForm });
+        resetStacks();
     }
 
     return (

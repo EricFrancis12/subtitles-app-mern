@@ -2,24 +2,25 @@ import React, { useEffect, useRef } from 'react';
 import { isEmpty } from '../utils/utils';
 
 export default function InputLine(props) {
-    const { defaultValue, onChange, onFocus, index, line, cursorPosition } = props;
+    const { value, onChange, index, line, cursorPosition } = props;
+    const { index: cursorIndex, line: cursorLine, position } = cursorPosition;
 
     const inputRef = useRef(null);
 
     useEffect(() => {
-        if (!isEmpty(cursorPosition)) {
+        if (cursorIndex === index && cursorLine === line) {
             inputRef.current.focus();
-            inputRef.current.selectionStart = cursorPosition || 0;
-            inputRef.current.selectionEnd = cursorPosition || 0;
+            inputRef.current.selectionStart = position || 0;
+            inputRef.current.selectionEnd = position || 0;
         }
-    }, []);
+    }, [cursorPosition]);
 
     return (
-        <input type='text' defaultValue={defaultValue}
+        <input type='text'
+            value={value}
             ref={inputRef}
             onChange={e => onChange(e)}
-            onFocus={e => onFocus(e)}
-            data-index={index} data-line={line} data-cursorposition={cursorPosition}>
+            data-index={index} data-line={line} data-cursorposition={position}>
         </input>
     )
 }

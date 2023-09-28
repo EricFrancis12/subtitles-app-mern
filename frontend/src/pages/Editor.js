@@ -1,31 +1,57 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Form } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { useVideoUpload } from '../contexts/VideoUploadContext';
 import { useSubtitles } from '../contexts/SubtitlesContext';
-import { useHistory } from '../contexts/HistoryContext';
+import useHistory from '../hooks/useHistory';
 import { Navigate } from 'react-router-dom';
 import defaultEditorSettings from '../config/defaultEditorSettings.json';
 import selectionScopes from '../config/selectionScopes.json';
 import Subtitle from '../models/Subtitle';
 import HistoryItem from '../models/HistoryItem';
 import InputLine from '../components/InputLine';
+import Test from '../components/Test';
+import Timeline from '../components/Timeline';
+import Transcript from '../components/Transcript';
+import VideoPlayer from '../components/VideoPlayer';
+import { isEmpty } from '../utils/utils';
+
+const MAX_NUM_LINES = 4;
+const INPUT_LINE_CLASS = 'INPUT_LINE_CLASS';
 
 export default function Editor(props) {
     const { numLinesOptions, numWordsPerLineOptions } = props;
 
-    const subtitleLineNumbers = [1, 2, 3, 4];
-
     const { userClient } = useAuth();
-    const { videoFile } = useVideoUpload();
     const { subtitlesData, setSubtitlesData, numLines, setNumLines, numWordsPerLine, setNumWordsPerLine } = useSubtitles();
-    const { undoStack, redoStack, addToUndoStack, undo, redo } = useHistory();
+
+    // const [subtitles, setSubtitles, undo, redo] = useHistory([]); // un-comment to use undo/redo system
+    const [subtitles, setSubtitles, undo, redo] = useState([]);
+
+    const selectedSubtitleRef = useRef();
 
     const [loading, setLoading] = useState(false);
-    const [subtitles, setSubtitles] = useState([]);
     const [selectedSubtitle, setSelectedSubtitle] = useState(null);
     const [selectionScope, setSelectionScope] = useState(0);
     const [cursorPosition, setCursorPosition] = useState({ index: null, line: null, position: null });
+    const [videoTimeSec, setVideoTimeSec] = useState(0);
+
+    function handleSubtitleClick(index, selectionScope = 1) {
+        setSelectionScope(selectionScope);
+        setSelectedSubtitle(index);
+    }
+
+    function updateLine(e) {
+        const index = parseInt(e.target.dataset.index);
+        const line = parseInt(e.target.dataset.line);
+        const position = e.target.selectionStart;
+
+        const newSubtitles = [...subtitles];
+
+        newSubtitles[index].lines[line - 1] = e.target.value;
+
+        setSubtitles(newSubtitles);
+    }
 
     function calculateDefaultSubtitles() {
         const defaultSubtitles = [];
@@ -51,14 +77,24 @@ export default function Editor(props) {
         }
     }, [selectionScope]);
 
+    // useEffect(() => {
+    //     if (selectedSubtitleRef.current) {
+    //         selectedSubtitleRef.current.scrollIntoView({
+    //             behavior: 'smooth',
+    //             block: 'end' // 'start', 'center', or 'end'
+    //         });
+    //     }
+    // }, [selectedSubtitle]);
+
     useEffect(() => {
+        // global click listener that changes selectionScope:
         document.addEventListener('click', handleClick);
 
         return () => document.removeEventListener('click', handleClick);
 
         function handleClick(e) {
             function traverseParents(element) {
-                const clickSelectionScope = element?.dataset?.selectionscope && parseInt(element.dataset.selectionscope);
+                const clickSelectionScope = parseInt(element?.dataset?.selectionscope);
                 if (clickSelectionScope) {
                     return clickSelectionScope; // Found a valid selectionScope, return it
                 } else if (element !== document.body) {
@@ -68,46 +104,25 @@ export default function Editor(props) {
             }
 
             const clickSelectionScope = traverseParents(e.target);
-            if (clickSelectionScope === null) {
+            console.log(`clickSelectionScope: ${clickSelectionScope}`);
+            if (isEmpty(clickSelectionScope)) {
                 setSelectionScope(0);
+            } else {
+                setSelectionScope(clickSelectionScope);
             }
         }
     }, []);
 
-
-    function handleSubtitleClick(index) {
-        setSelectionScope(1);
-        setSelectedSubtitle(index);
-    }
-
-    function updateLine(e) {
-        const index = parseInt(e.target.dataset.index);
-        const line = parseInt(e.target.dataset.line);
-        const position = e.target.selectionStart;
-
-        const newSubtitles = [...subtitles];
-        newSubtitles[index][`line${line}`] = e.target.value;
-        setSubtitles(newSubtitles);
-        setCursorPosition({ index, line, position });
-    }
-
-    function updateCursorPosition(e) {
-        const index = parseInt(e.target.dataset.index);
-        const line = parseInt(e.target.dataset.line);
-        const position = e.target.selectionStart;
-        setCursorPosition({ index, line, position });
-    }
-
-    // Global keydown listener, covering multiple key handlers:
     useEffect(() => {
+        // Global keydown listener, covering multiple key handlers:
         document.addEventListener('keydown', handleKeydown);
 
         return () => document.removeEventListener('keydown', handleKeydown);
 
         function handleKeydown(e) {
-            if (e.key.toUpperCase() === 'ENTER' && document.activeElement instanceof HTMLInputElement) {
+            if (e.key.toUpperCase() === 'ENTER' && document.activeElement.classList.contains(INPUT_LINE_CLASS)) {
                 handleEnter(e);
-            } else if (e.key.toUpperCase() === 'BACKSPACE' && document.activeElement instanceof HTMLInputElement) {
+            } else if (e.key.toUpperCase() === 'BACKSPACE' && document.activeElement.classList.contains(INPUT_LINE_CLASS)) {
                 handleBackspace(e);
             }
         }
@@ -115,7 +130,6 @@ export default function Editor(props) {
 
     function handleEnter(e) {
         if (e.key.toUpperCase() === 'ENTER' && document.activeElement instanceof HTMLInputElement) {
-            setLoading(true);
 
             const input = document.activeElement;
             const index = parseInt(input.dataset?.index);
@@ -128,40 +142,31 @@ export default function Editor(props) {
 
             const newSubtitles = [...subtitles];
 
-            const _numLines = parseInt(subtitles[index].numLines);
-            if (_numLines < 4) {
+            const _numLines = subtitles[index].lines.length;
+            if (_numLines < MAX_NUM_LINES) {
                 // if there's room to add another line to the subtitle
-                const newSubtitle = {
-                    ...subtitles[index],
-                    numLines: _numLines + 1
-                };
-
-                for (let i = 1; i <= 4; i++) {
-                    if (breakpointLineNumber + 1 === i) {
-                        newSubtitle[`line${i}`] = afterBreakpoint;
-                    } else if (breakpointLineNumber < i) {
-                        newSubtitle[`line${i}`] = subtitles[index][`line${i - 1}`];
-                    } else if (breakpointLineNumber === i) {
-                        newSubtitle[`line${i}`] = beforeBreakpoint;
-                    } else {
-                        newSubtitle[`line${i}`] = subtitles[index][`line${i}`];
+                const newSubtitle = new Subtitle({
+                    options: {
+                        ...subtitles[index]
                     }
-                }
+                });
+
+                newSubtitle.lines.splice(breakpointLineNumber - 1, 1, beforeBreakpoint, afterBreakpoint);
 
                 newSubtitles.splice(index, 1, newSubtitle);
                 setCursorPosition({ index, line: breakpointLineNumber + 1, position: 0 });
             } else {
                 // if there's no room, create another subtitle
                 const duration = subtitles[index].endSec - subtitles[index].startSec;
-                const totalChars = subtitles[index].line1.length + subtitles[index].line2.length + subtitles[index].line3.length + subtitles[index].line4.length;
+                const totalChars = subtitles[index].lines.join('').length;
                 const ratio = absoluteBreakpoint(subtitles[index], breakpoint, breakpointLineNumber) / totalChars;
                 const newTimeSec = subtitles[index].startSec + duration * ratio;
 
-                // calcs the breakpoint considering all chars, of all lines
                 function absoluteBreakpoint(subtitle, breakpoint, lineNumber) {
+                    // calcs the breakpoint considering all chars, of all lines:
                     let sum = 0;
                     for (let i = 1; i < lineNumber; i++) {
-                        sum += subtitle[`line${i}`].length;
+                        sum += subtitle.lines[i - 1].length;
                     }
                     return sum + breakpoint;
                 }
@@ -169,25 +174,20 @@ export default function Editor(props) {
                 const newSubtitleA = new Subtitle({
                     options: {
                         ...subtitles[index],
-                        line1: breakpointLineNumber === 1 ? beforeBreakpoint : subtitles[index].line1,
-                        line2: breakpointLineNumber === 2 ? beforeBreakpoint : breakpointLineNumber > 2 ? subtitles[index].line2 : '',
-                        line3: breakpointLineNumber === 3 ? beforeBreakpoint : breakpointLineNumber > 3 ? subtitles[index].line3 : '',
-                        line4: breakpointLineNumber === 4 ? beforeBreakpoint : breakpointLineNumber > 4 ? subtitles[index].line4 : '',
-                        numLines: breakpointLineNumber,
-                        endSec: newTimeSec
+                        endSec: newTimeSec,
+                        lines: [...subtitles[index].lines]
                     }
                 });
+                newSubtitleA.lines.splice(breakpointLineNumber - 1, newSubtitleA.lines.length + 9999, beforeBreakpoint);
+
                 const newSubtitleB = new Subtitle({
                     options: {
                         ...subtitles[index],
                         startSec: newTimeSec,
-                        line1: afterBreakpoint,
-                        line2: subtitles[index][`line${breakpointLineNumber + 1}`] || '',
-                        line3: subtitles[index][`line${breakpointLineNumber + 2}`] || '',
-                        line4: subtitles[index][`line${breakpointLineNumber + 3}`] || '',
-                        numLines: _numLines - breakpointLineNumber + 1
+                        lines: [...subtitles[index].lines]
                     }
                 });
+                newSubtitleB.lines.splice(0, breakpointLineNumber, afterBreakpoint);
 
                 newSubtitles.splice(index, 1, newSubtitleA, newSubtitleB);
                 setCursorPosition({ index: index + 1, line: 1, position: 0 });
@@ -195,159 +195,143 @@ export default function Editor(props) {
             }
 
             setSubtitles(newSubtitles);
-            setTimeout(() => {
-                setLoading(false);
-            }, 0);
         }
     }
 
     function handleBackspace(e) {
         const input = document.activeElement;
+        const index = parseInt(input.dataset?.index);
+        const lineNumber = parseInt(input.dataset?.line);
 
-        if (input.selectionStart === 0) {
-            setLoading(true);
+        if (input.selectionStart !== 0 || (index === 0 && lineNumber === 1)) return null;
+        const totalNumLines = subtitles[index].lines.length + subtitles[index - 1]?.lines?.length;
+        const newSubtitles = [...subtitles];
 
-            const index = parseInt(input.dataset?.index);
-            const lineNumber = parseInt(input.dataset?.line);
-            const newSubtitles = [...subtitles];
+        if (lineNumber === 1) {
+            if (totalNumLines > MAX_NUM_LINES + 1) return null;
 
-            console.log(typeof subtitles[index].numLines, typeof subtitles[index - 1].numLines);
-            console.log(lineNumber === 1);
-            console.log(subtitles[index].numLines + subtitles[index - 1].numLines);
-            if (lineNumber === 1 && (subtitles[index].numLines + subtitles[index - 1].numLines <= 5)) {
-                // combine this subtitle with the one before it:
-                console.log('merge subtitles path');
+            // combine this subtitle with the one before it:
+            e.preventDefault();
 
-                const newNumLines = subtitles[index - 1].numLines + subtitles[index].numLines - 1;
-                const combinedSubtitle = new Subtitle({
-                    options: {
-                        ...subtitles[index - 1],
-                        line1: subtitles[index - 1].line1 || '',
-                        line2: subtitles[index - 1].line2 || '',
-                        line3: subtitles[index - 1].line3 || '',
-                        line4: subtitles[index - 1].line4 || '',
-                        numLines: newNumLines,
-                        startSec: subtitles[index - 1].startSec,
-                        endSec: subtitles[index].endSec,
-                        confidence: (subtitles[index - 1].confidence + subtitles[index].confidence) / 2
-                    }
-                });
-
-                if (newNumLines < 4) {
-                    console.log('numLines is less than 4 path');
-                    for (let i = 0; i < newNumLines; i++) {
-                        combinedSubtitle[`line${newNumLines - i + 1}`] += subtitles[index][`line${newNumLines - i - 1}`] || '';
-                    }
-                    // setCursorPosition({ index: index - 1, line: , position: 0 });
-                } else {
-                    console.log('numLines is equal to 4 path');
-                    for (let i = 0; i < newNumLines; i++) {
-                        combinedSubtitle[`line${newNumLines - i}`] += subtitles[index][`line${newNumLines - i - 1}`] || '';
-                    }
+            const combinedSubtitle = new Subtitle({
+                options: {
+                    ...subtitles[index - 1],
+                    lines: [...subtitles[index - 1].lines],
+                    startSec: subtitles[index - 1].startSec,
+                    endSec: subtitles[index].endSec,
+                    confidence: (subtitles[index - 1].confidence + subtitles[index].confidence) / 2
                 }
+            });
 
-                // for (let i = 1; i <= 4; i++) {
-                //     if (combinedSubtitle[`line${lineNumber + i}`]) {
-                //         combinedSubtitle[`line${lineNumber + i}`] = subtitles[index][`line${i}`];
-                //     }
-                // }
-
-
-
-                newSubtitles.splice(index - 1, 2, combinedSubtitle);
-                // setCursorPosition({ index: index - 1, line: 1, position: 0 });
-                setSelectedSubtitle(index - 1);
-
+            if (totalNumLines === MAX_NUM_LINES + 1) {
+                // if 5 totalNumLines, we are merging the 2 at the breakpoint, to finish with 4:
+                combinedSubtitle.lines = [...(subtitles[index - 1].lines.join('\n') + subtitles[index].lines.join('\n')).split('\n')];
+                setCursorPosition({ index: index - 1, line: subtitles[index - 1].lines.length, position: subtitles[index - 1].lines.at(-1).length });
             } else {
-                // join this line with the one before it:
-                console.log('join lines path');
-
-                const newSubtitle = new Subtitle({
-                    options: {
-                        ...subtitles[index],
-                        line1: 'REPLACE',
-                        line2: 'REPLACE',
-                        line3: 'REPLACE',
-                        line4: 'REPLACE'
-                    }
-                });
-
-                newSubtitles.splice(index, 1, newSubtitle);
+                // if 4 or less totalNumLines, we can simply lay them out one-after-another:
+                combinedSubtitle.lines.splice(subtitles[index - 1].lines.length, combinedSubtitle.lines.length + 9999, ...subtitles[index].lines);
+                setCursorPosition({ index: index - 1, line: subtitles[index - 1].lines.length + 1, position: 0 });
             }
 
-            setSubtitles(newSubtitles);
-            setTimeout(() => {
-                setLoading(false);
-            }, 0);
+            newSubtitles.splice(index - 1, 2, combinedSubtitle);
+            setSelectedSubtitle(index - 1);
+
+        } else {
+            // join this line with the one before it:
+            e.preventDefault();
+
+            const newSubtitle = new Subtitle({
+                options: {
+                    ...subtitles[index],
+                    lines: [...subtitles[index].lines]
+                }
+            });
+            setCursorPosition({ index: index, line: lineNumber - 1, position: newSubtitle?.lines[lineNumber - 2]?.length });
+            newSubtitle.lines.splice(lineNumber - 2, 2, newSubtitle.lines[lineNumber - 2] + newSubtitle.lines[lineNumber - 1]);
+
+            newSubtitles.splice(index, 1, newSubtitle);
         }
+
+        setSubtitles(newSubtitles);
     }
 
     return (
-        <>
-            <div>
-                <br></br>
+        <div className='d-flex flex-column justify-items-center align-items-center w-100'>
+            <div className='d-flex justify-items-between align-items-start'>
                 <div>
-                    <button onClick={e => addToUndoStack(new HistoryItem({
-                        storedStates: [
-                            [subtitles, setSubtitles],
-                            [loading, setLoading]
-                        ]
-                    }))}>Add To Undo Stack</button>
-                </div>
-                <br></br>
-                <div>
-                    <button onClick={e => undo()}>Undo</button>
-                </div>
-                <br></br>
-                <div>
-                    <button onClick={e => redo()}>Redo</button>
-                </div>
-                <br></br>
-            </div>
-            <div>
-                <p>Selection Type: {selectionScope}</p>
-            </div>
-            <div>
-                <Form.Group>
-                    <Form.Label>Change Number of Lines:</Form.Label>
-                    <Form.Select defaultValue={numLines} onChange={(e) => setNumLines(parseInt(e.target.value))} data-selectionscope='1'>
-                        {numLinesOptions.map((option, index) => <option value={option} key={index}>{option}</option>)}
-                    </Form.Select>
-                </Form.Group>
-                <Form.Group>
-                    <Form.Label>Change Number of Words Per Line:</Form.Label>
-                    <Form.Select defaultValue={numWordsPerLine} onChange={(e) => setNumWordsPerLine(parseInt(e.target.value))} data-selectionscope='1'>
-                        {numWordsPerLineOptions.map((option, index) => <option value={option} key={index}>{option}</option>)}
-                    </Form.Select>
-                </Form.Group>
-            </div>
-            <div>
-                {subtitles.map((subtitle, index) => {
-                    return (
-                        <div onClick={e => handleSubtitleClick(index)} data-selectionscope='1' data-numlines={subtitle.numLines}
-                            key={index} className={(selectedSubtitle === index && 'selected-subtitle') + ' border border-black rounded m-2 p-2'}>
-                            <div>
-                                {!loading && subtitleLineNumbers.map((lineNumber, _index) => {
-                                    return (
-                                        <InputLine defaultValue={subtitle[`line${lineNumber}`]}
-                                            key={_index}
-                                            onChange={e => updateLine(e)}
-                                            onFocus={e => updateCursorPosition(e)}
-                                            index={index} line={lineNumber}
-                                            cursorPosition={cursorPosition.index === index && cursorPosition.line === lineNumber ? cursorPosition.position : null}
-                                        />
-                                    )
-                                })}
-                            </div>
-                            <div>
-                                <p>Start: {subtitle.startSec?.toFixed(2)}</p>
-                                <p>End: {subtitle?.endSec?.toFixed(2)}</p>
-                                <p>Confidence: {(subtitle.confidence * 100).toFixed(2) || '--:--'}%</p>
-                            </div>
+                    <div>
+                        <br></br>
+                        <div>
+                            <button onClick={e => undo()}>Undo</button>
                         </div>
-                    )
-                })}
+                        <br></br>
+                        <div>
+                            <button onClick={e => redo()}>Redo</button>
+                        </div>
+                        <br></br>
+                    </div>
+                    <div>
+                        <p>Selection Type: {selectionScope}</p>
+                    </div>
+                    <div>
+                        <Form.Group>
+                            <Form.Label>Change Number of Lines:</Form.Label>
+                            <Form.Select defaultValue={numLines} onChange={(e) => setNumLines(parseInt(e.target.value))} data-selectionscope='1'>
+                                {numLinesOptions.map((option, index) => <option value={option} key={index}>{option}</option>)}
+                            </Form.Select>
+                        </Form.Group>
+                        <Form.Group>
+                            <Form.Label>Change Number of Words Per Line:</Form.Label>
+                            <Form.Select defaultValue={numWordsPerLine} onChange={(e) => setNumWordsPerLine(parseInt(e.target.value))} data-selectionscope='1'>
+                                {numWordsPerLineOptions.map((option, index) => <option value={option} key={index}>{option}</option>)}
+                            </Form.Select>
+                        </Form.Group>
+                    </div>
+                </div>
+                <div className='overflow-scroll' style={{ maxHeight: '60vh' }}>
+                    {!loading && subtitles.map((subtitle, index) => {
+                        return (
+                            <div onClick={e => handleSubtitleClick(index, 1)}
+                                ref={selectedSubtitle === index ? selectedSubtitleRef : null}
+                                data-selectionscope='1' data-numlines={subtitle.lines.length}
+                                key={index} className={(selectedSubtitle === index && 'selected-subtitle') + ' border border-black rounded m-2 p-2'}>
+                                <div>
+                                    {subtitle.lines.map((line, _index) => {
+                                        return (
+                                            <InputLine value={line}
+                                                key={_index}
+                                                onChange={e => updateLine(e)}
+                                                index={index} line={_index + 1}
+                                                cursorPosition={cursorPosition}
+                                            />
+                                        )
+                                    })}
+                                </div>
+                                <div>
+                                    <p>Start: {subtitle.startSec?.toFixed(2)}</p>
+                                    <p>End: {subtitle?.endSec?.toFixed(2)}</p>
+                                    <p>Confidence: {(subtitle.confidence * 100).toFixed(2) || '--:--'}%</p>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+                <Transcript subtitles={subtitles}
+                    selectedSubtitle={selectedSubtitle}
+                    handleSubtitleClick={handleSubtitleClick} />
+                <VideoPlayer subtitles={subtitles}
+                    setSubtitles={setSubtitles}
+                    videoTimeSec={videoTimeSec}
+                    setVideoTimeSec={setVideoTimeSec}
+                    selectionScope={selectionScope}
+                    handleSubtitleClick={handleSubtitleClick} />
             </div>
-        </>
+            <Timeline subtitles={subtitles}
+                videoTimeSec={videoTimeSec}
+                setVideoTimeSec={setVideoTimeSec}
+                selectedSubtitle={selectedSubtitle}
+                handleSubtitleClick={handleSubtitleClick}
+            />
+        </div>
     )
 }

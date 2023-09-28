@@ -13,7 +13,8 @@ const { upload, handleMulterErrors } = require('../../middleware/upload/upload')
 
 router.post('/', auth, upload.single('videoFile'), async (req, res) => {
     try {
-        const subtitlesData = handle.processFile(req.tmpFilePath);
+        // const subtitlesData = handle.processFile(req.tmpFilePath);
+        const subtitlesData = require('../../../frontend/src/config/subtitlesData.example.json'); // un-comment this to use example data, for development
         console.log(subtitlesData);
         res.status(200).json({ success: true, subtitlesData });
     } catch (err) {

@@ -5,12 +5,9 @@ export default class Subtitle {
     constructor(props) {
         const { options, userClient } = props;
 
-        this.line1 = options?.line1 || '';
-        this.line2 = options?.line2 || '';
-        this.line3 = options?.line3 || '';
-        this.line4 = options?.line4 || '';
+        this.lines = options?.lines || [];
+        this.index = undefined;
 
-        this.numLines = options?.numLines || null;
         this.startSec = options?.startSec || null;
         this.endSec = options?.endSec || null;
         this.confidence = options?.confidence || null;
@@ -30,35 +27,37 @@ export default class Subtitle {
     }
 
     fill(subtitlesData, numLines, numWordsPerLine, i = 0) {
-        this.line1 = '';
-        this.line2 = '';
-        this.line3 = '';
-        this.line4 = '';
+        this.lines = [];
 
-        this.numLines = numLines;
         this.startSec = subtitlesData.words[i].startSec;
 
         const confidenceValues = [];
 
         for (let j = 1; j <= numLines; j++) {
+            let result = '';
             for (let k = 1; k <= numWordsPerLine; k++) {
-                this[`line${j}`] += subtitlesData.words[i]?.word || '';
+                result += subtitlesData.words[i]?.word || '';
 
                 if (subtitlesData.words[i]?.confidence) {
                     confidenceValues.push(subtitlesData.words[i]?.confidence);
                 }
 
-                if (k < numWordsPerLine && this[`line${j}`] !== '') {
-                    this[`line${j}`] += ' ';
+                if (k < numWordsPerLine) {
+                    result += ' ';
                 }
 
                 if (k <= numWordsPerLine) {
                     i++;
                 }
             }
+            this.lines.push(result);
         }
 
-        this.endSec = subtitlesData.words[i]?.endSec || subtitlesData.words.at(-1).endSec;
+        while (this.lines.at(-1) === '') {
+            this.lines.pop(); // chop-off excess lines that are ecactly empty strings
+        }
+
+        this.endSec = subtitlesData.words[i - 1]?.endSec || subtitlesData.words.at(-1).endSec;
 
         // To represent confidence, there are 2 options: highest and mean
         // (each with functions imported above)

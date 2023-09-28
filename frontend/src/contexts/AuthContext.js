@@ -28,7 +28,7 @@ export function AuthProvider({ children }) {
                         setUserClient(resJson.userClient);
                     }
                 }).catch(err => {
-
+                    console.error(err);
                 }).finally(() => {
                     fetchingUserClient = false;
                 });

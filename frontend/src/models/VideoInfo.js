@@ -6,6 +6,7 @@ export default class VideoInfo {
 
         if (videoFile) {
             this.name = videoFile.name;
+            this.videoURL = URL.createObjectURL(videoFile);
         }
 
         if (videoElement) {

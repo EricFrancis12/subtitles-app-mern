@@ -17,6 +17,7 @@ import ResetPasswordAuth from './pages/ResetPasswordAuth';
 import EnterNewPassword from './pages/EnterNewPassword';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
+import Test from './components/Test';
 
 function App() {
     return (
@@ -43,6 +44,7 @@ function App() {
                                     <Route path='reset/enter-new-password' element={<R><EnterNewPassword /></R>} />
                                 </Route>
                                 <Route path='/logout' element={<R><Logout /></R>} />
+                                <Route path='/test' element={<R><Test /></R>} />
                                 <Route path='/*' element={<R><NotFound /></R>} />
                             </Routes>
                         </Router>

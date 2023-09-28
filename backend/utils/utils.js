@@ -7,7 +7,7 @@ const backendHost = `${process.env.DOMAIN || `localhost:${process.env.PORT}`}`;
 const backendRootUrl = `${process.env.PROTOCOL__ || 'https://'}${backendHost}`;
 
 function isNil(any) {
-    return any === undefined || any === null;
+    return any === undefined || any === null || any === NaN;
 }
 
 function isEmpty(any) {
