@@ -18,11 +18,12 @@
         "Papyrus"
     ],
     "fontSize": [
-        "6px",
-        "8px",
-        "10px",
-        "12px",
-        "14px"
+        6,
+        8,
+        10,
+        12,
+        14,
+        16
     ],
     "fontColor": null,
     "borderW": [

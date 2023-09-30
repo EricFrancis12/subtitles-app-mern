@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { isEmpty } from '../utils/utils';
 
 export default function InputLine(props) {
     const { value, onChange, index, line, cursorPosition } = props;

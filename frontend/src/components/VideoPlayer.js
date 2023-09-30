@@ -3,12 +3,40 @@ import { useVideoUpload } from '../contexts/VideoUploadContext';
 import useDragger from '../hooks/useDragger';
 import { isEmpty } from '../utils/utils';
 
-const SUBTITLE_OVERLAY_LINE = 'SUBTITLE_OVERLAY_LINE';
+export const SUBTITLE_OVERLAY = 'SUBTITLE_OVERLAY';
+export const SUBTITLE_OVERLAY_LINE = 'SUBTITLE_OVERLAY_LINE';
+export const ACTIVE_OVERLAY_LINE_ID = 'ACTIVE_OVERLAY_LINE_ID';
 const VIDEO_BUTTON_OPTIONS = { PLAY: 'PLAY', PAUSE: 'PAUSE' };
 const VIDEO_UPDATE_RATE_MS = 100;
 
+export function parseHtmlString(htmlString) {
+    // Create a temporary div element to parse the HTML string
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlString;
+
+    // Check if there is an outer element
+    if (tempDiv.children.length === 1) {
+        const innerText = tempDiv.children[0].textContent;
+
+        // Convert dataset attributes to an object
+        const dataset = {};
+        const attributes = tempDiv.children[0].attributes;
+        for (let i = 0; i < attributes.length; i++) {
+            const attribute = attributes[i];
+            if (attribute.name.startsWith('data-')) {
+                dataset[attribute.name.substring(5)] = attribute.value;
+            }
+        }
+
+        return { text: innerText, dataset };
+    } else {
+        // No outer element, return the inner text
+        return { text: htmlString, dataset: {} };
+    }
+}
+
 export default function VideoPlayer(props) {
-    const { subtitles, setSubtitles, videoTimeSec, setVideoTimeSec, selectionScope, handleSubtitleClick } = props;
+    const { subtitles, setSubtitles, videoTimeSec, setVideoTimeSec, selectionScope, selectedSubtitle, handleSubtitleClick } = props;
 
     const { videoFile } = useVideoUpload();
 
@@ -19,24 +47,22 @@ export default function VideoPlayer(props) {
 
     const videoRef = useRef();
     const subtitleOverlayRef = useRef();
-    const inputClicked = useRef(null)
+    const inputClicked = useRef(null);
 
-    useDragger('subtitle-overlay', draggerCallback);
+    useDragger(selectionScope <= 1 ? SUBTITLE_OVERLAY : null, draggerCallback);
 
     function draggerCallback(coords) {
         const { lastX, lastY } = coords;
-        console.log(coords);
-        console.log(subtitleOverlay);
-        const index = subtitleOverlay.index;
+        const index = subtitleOverlay?.index;
 
-        const newSubtitles = [...subtitles];
-        // newSubtitles[index].lines = [...newSubtitles[index].lines];
-        newSubtitles[index].positionX = lastX;
-        newSubtitles[index].positionY = lastY;
+        if (!isEmpty(index)) {
+            const newSubtitles = [...subtitles];
+            // newSubtitles[index].lines = [...newSubtitles[index].lines];
+            newSubtitles[index].positionX = lastX;
+            newSubtitles[index].positionY = lastY;
 
-        setSubtitles(newSubtitles);
-
-        setTimeout(() => console.log(subtitles), 0);
+            setSubtitles(newSubtitles);
+        }
     }
 
     function handleVideoButtonClick() {
@@ -65,6 +91,12 @@ export default function VideoPlayer(props) {
             setVideoSrc(videoURL);
         }
     }, [videoFile]);
+
+    useEffect(() => {
+        if (selectionScope > 0 && !isEmpty(selectedSubtitle)) {
+            setVideoTimeSec(subtitles[selectedSubtitle].startSec);
+        }
+    }, [selectedSubtitle, selectionScope]);
 
     useEffect(() => {
         const currentSubtitle = binarySearchForSubtitle(subtitles, videoTimeSec);
@@ -108,10 +140,14 @@ export default function VideoPlayer(props) {
 
             if (e.target === inputClicked.current) {
                 inputClicked.current.dataset.selectionscope = '2';
+                inputClicked.current.id = ACTIVE_OVERLAY_LINE_ID;
             } else if (!inputClicked.current && e.target.classList.contains(SUBTITLE_OVERLAY_LINE)) {
                 inputClicked.current = e.target;
             } else {
-                if (inputClicked.current) inputClicked.current.dataset.selectionscope = '1';
+                if (inputClicked.current) {
+                    inputClicked.current.dataset.selectionscope = '1';
+                    inputClicked.current.id = '';
+                }
                 inputClicked.current = null;
             }
         }
@@ -132,15 +168,41 @@ export default function VideoPlayer(props) {
             <div>
                 <div>
                     <div className='position-relative bg-primary overflow-hidden' style={{ height: '400px', width: '400px' }}>
-                        <div id='subtitle-overlay' ref={subtitleOverlayRef} className='position-absolute border border-black' style={{ cursor: 'pointer', zIndex: '10' }}>
+                        <div id='SUBTITLE_OVERLAY' ref={subtitleOverlayRef} className='position-absolute border border-black' style={{ cursor: 'pointer', zIndex: '10' }}>
                             {subtitleOverlay?.lines?.map((line, _index) => {
+                                const { text, dataset } = parseHtmlString(line);
+
+                                const font = dataset.font ?? subtitleOverlay.font ?? undefined;
+                                const fontSize = dataset.fontSize ?? subtitleOverlay.fontSize ?? undefined;
+                                const fontColor = dataset.fontColor ?? subtitleOverlay.fontColor ?? undefined;
+                                const borderW = dataset.borderW ?? subtitleOverlay.borderW ?? undefined;
+                                const borderColor = dataset.borderColor ?? subtitleOverlay.borderColor ?? undefined;
+                                const backgroundColor = dataset.backgroundColor ?? subtitleOverlay.backgroundColor ?? undefined;
+                                const bold = dataset.bold ?? subtitleOverlay.bold ?? undefined;
+                                const italic = dataset.italic ?? subtitleOverlay.italic ?? undefined;
+                                const underline = dataset.underline ?? subtitleOverlay.underline ?? undefined;
+                                const align = subtitleOverlay.align ?? undefined;
+
                                 return (
                                     <input key={_index}
                                         readOnly={selectionScope < 2 ? true : false}
-                                        value={line}
+                                        value={text}
                                         onChange={e => updateLine(e)}
-                                        className={SUBTITLE_OVERLAY_LINE + ' '}
-                                        style={{ display: 'block', textAlign: subtitleOverlay.align ?? '', cursor: 'pointer' }}
+                                        className={SUBTITLE_OVERLAY_LINE + ' w-100'}
+                                        style={{
+                                            display: 'block',
+                                            cursor: 'pointer',
+                                            fontFamily: font,
+                                            fontSize: fontSize,
+                                            color: fontColor,
+                                            borderWidth: borderW,
+                                            borderColor: borderColor,
+                                            backgroundColor: backgroundColor,
+                                            fontWeight: bold,
+                                            fontStyle: italic,
+                                            textDecoration: underline,
+                                            textAlign: align
+                                        }}
                                         data-selectionscope='1' data-index={subtitleOverlay.index} data-line={_index + 1}>
                                     </input>
                                 )
@@ -150,7 +212,7 @@ export default function VideoPlayer(props) {
                     </div>
                 </div>
                 <div>
-                    <button data-selectionscope='1'
+                    <button data-selectionscope={selectionScope}
                         onClick={e => handleVideoButtonClick()}>{videoButton === VIDEO_BUTTON_OPTIONS.PLAY ? 'Play' : videoButton === VIDEO_BUTTON_OPTIONS.PAUSE ? 'Pause' : ''}
                     </button>
                 </div>

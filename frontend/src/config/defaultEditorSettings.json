@@ -2,7 +2,7 @@
     "numLines": 1,
     "numWordsPerLine": 1,
     "font": "Georgia",
-    "fontSize": "14px",
+    "fontSize": 14,
     "fontColor": "#70e26a",
     "borderW": 3,
     "borderColor": "#000000",

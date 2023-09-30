@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useVideoUpload } from '../contexts/VideoUploadContext';
+import { parseHtmlString } from './VideoPlayer';
 
 const SCROLLING_CONSTANT = 4; // increase/decrease this to set the speed at which the timeline expands/contracts when scrolled
 const MIN_TIMELINE_WIDTH = 1000;
@@ -20,12 +21,12 @@ export default function Timeline(props) {
     const [mouseIndicatorLeft, setMouseIndicatorLeft] = useState(0);
 
     useEffect(() => {
-        if (selectedSubtitleRef.current) {
-            selectedSubtitleRef.current.scrollIntoView({
-                behavior: 'smooth',
-                block: 'end' // 'start', 'center', or 'end'
-            });
-        }
+        // if (selectedSubtitleRef.current) {
+        //     selectedSubtitleRef.current.scrollIntoView({
+        //         behavior: 'smooth',
+        //         block: 'end' // 'start', 'center', or 'end'
+        //     });
+        // }
     }, [selectedSubtitle]);
 
     useEffect(() => {
@@ -102,7 +103,7 @@ export default function Timeline(props) {
                             {subtitle.lines.map((line, _index) => {
                                 return (
                                     <div key={_index}>
-                                        {line}
+                                        {parseHtmlString(line).text}
                                     </div>
                                 )
                             })}

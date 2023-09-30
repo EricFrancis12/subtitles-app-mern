@@ -12,6 +12,8 @@ function useDragger(id, callback) {
     });
 
     useEffect(() => {
+        if (!id) return;
+
         const target = document.getElementById(id); // target needs to have position: absolute
         if (!target) throw new Error('Element with given id does not exist');
 

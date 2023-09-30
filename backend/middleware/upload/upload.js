@@ -12,7 +12,7 @@ const fileStorageEngine = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         console.log(file.originalname);
-        
+
         const fileExt = file.originalname.split('.').pop().toLowerCase();
         const tmpFile = `${Date.now()}.${fileExt}`;
         const tmpFilePath = `${tmpDir}/${tmpFile}`;
@@ -34,9 +34,9 @@ const upload = multer({
         fileSize: oneHundredMB
     },
     fileFilter: (req, file, cb) => {
-        const allowedFileTypes = ['mp4', 'mov', 'mkv', 'flv', 'avi', 'webm', 'wmv'];
+        const allowedFileExts = ['mp4', 'mov', 'mkv', 'flv', 'avi', 'webm', 'wmv'];
         const fileExt = file.originalname.split('.').pop().toLowerCase();
-        if (!allowedFileTypes.includes(fileExt)) {
+        if (!allowedFileExts.includes(fileExt)) {
             const error = new Error('File type not allowed');
             error.code = 'FILE_TYPE_NOT_ALLOWED';
             return cb(error, false);

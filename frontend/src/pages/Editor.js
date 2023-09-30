@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Form } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { useVideoUpload } from '../contexts/VideoUploadContext';
 import { useSubtitles } from '../contexts/SubtitlesContext';
 import useHistory from '../hooks/useHistory';
 import { Navigate } from 'react-router-dom';
 import defaultEditorSettings from '../config/defaultEditorSettings.json';
+import editorOptions from '../config/editorOptions.json';
 import selectionScopes from '../config/selectionScopes.json';
 import Subtitle from '../models/Subtitle';
 import HistoryItem from '../models/HistoryItem';
@@ -15,9 +16,26 @@ import Timeline from '../components/Timeline';
 import Transcript from '../components/Transcript';
 import VideoPlayer from '../components/VideoPlayer';
 import { isEmpty } from '../utils/utils';
+import { SUBTITLE_OVERLAY_LINE } from '../components/VideoPlayer';
+import { ACTIVE_OVERLAY_LINE_ID, parseHtmlString } from '../components/VideoPlayer';
+import StylePanel from '../components/StylePanel';
+import ExportPanel from '../components/ExportPanel';
+
 
 const MAX_NUM_LINES = 4;
 const INPUT_LINE_CLASS = 'INPUT_LINE_CLASS';
+const DEFAULT_STYLE_PANEL = {
+    font: { name: 'Font', value: defaultEditorSettings.font },
+    fontSize: { name: 'Font Size', value: defaultEditorSettings.fontSize },
+    fontColor: { name: 'Font Color', value: defaultEditorSettings.fontColor },
+    borderW: { name: 'Border Width', value: defaultEditorSettings.borderW },
+    borderColor: { name: 'Border Color', value: defaultEditorSettings.borderColor },
+    backgroundColor: { name: 'Background Color', value: defaultEditorSettings.backgroundColor },
+    bold: { name: 'Bold', value: defaultEditorSettings.bold },
+    italic: { name: 'Italic', value: defaultEditorSettings.italic },
+    underline: { name: 'Underline', value: defaultEditorSettings.underline },
+    align: { name: 'Align', value: defaultEditorSettings.align }
+};
 
 export default function Editor(props) {
     const { numLinesOptions, numWordsPerLineOptions } = props;
@@ -29,12 +47,15 @@ export default function Editor(props) {
     const [subtitles, setSubtitles, undo, redo] = useState([]);
 
     const selectedSubtitleRef = useRef();
+    const selectionRef = useRef();
+    const globalStylePanel = useRef();
 
     const [loading, setLoading] = useState(false);
     const [selectedSubtitle, setSelectedSubtitle] = useState(null);
     const [selectionScope, setSelectionScope] = useState(0);
     const [cursorPosition, setCursorPosition] = useState({ index: null, line: null, position: null });
     const [videoTimeSec, setVideoTimeSec] = useState(0);
+    const [stylePanel, setStylePanel] = useState(DEFAULT_STYLE_PANEL);
 
     function handleSubtitleClick(index, selectionScope = 1) {
         setSelectionScope(selectionScope);
@@ -69,6 +90,12 @@ export default function Editor(props) {
         if (subtitlesData) {
             calculateDefaultSubtitles();
         }
+
+        // selects first subtitle (at index 0), and sets selectionScope to 1 by default:
+        setTimeout(() => {
+            setSelectionScope(1);
+            setSelectedSubtitle(0);
+        }, 0);
     }, [numLines, numWordsPerLine]);
 
     useEffect(() => {
@@ -77,14 +104,59 @@ export default function Editor(props) {
         }
     }, [selectionScope]);
 
-    // useEffect(() => {
-    //     if (selectedSubtitleRef.current) {
-    //         selectedSubtitleRef.current.scrollIntoView({
-    //             behavior: 'smooth',
-    //             block: 'end' // 'start', 'center', or 'end'
-    //         });
-    //     }
-    // }, [selectedSubtitle]);
+    useEffect(() => {
+        // if (selectedSubtitleRef.current) {
+        //     selectedSubtitleRef.current.scrollIntoView({
+        //         behavior: 'smooth',
+        //         block: 'end' // 'start', 'center', or 'end'
+        //     });
+        // }
+
+        console.log(selectedSubtitle);
+        console.log(subtitles[selectedSubtitle]);
+
+        if (!isEmpty(selectedSubtitle)) {
+            setStylePanel({
+                ...stylePanel,
+                font: {
+                    ...stylePanel.font,
+                    value: subtitles[selectedSubtitle].font
+                },
+                fontSize: {
+                    ...stylePanel.fontSize,
+                    value: subtitles[selectedSubtitle].fontSize
+                },
+                fontColor: {
+                    ...stylePanel.fontColor,
+                    value: subtitles[selectedSubtitle].fontColor
+                },
+                borderW: {
+                    ...stylePanel.borderW,
+                    value: subtitles[selectedSubtitle].borderW
+                },
+                borderColor: {
+                    ...stylePanel.borderColor,
+                    value: subtitles[selectedSubtitle].borderColor
+                },
+                backgroundColor: {
+                    ...stylePanel.backgroundColor,
+                    value: subtitles[selectedSubtitle].backgroundColor
+                },
+                bold: {
+                    ...stylePanel.bold,
+                    value: subtitles[selectedSubtitle].bold
+                },
+                italic: {
+                    ...stylePanel.italic,
+                    value: subtitles[selectedSubtitle].italic
+                },
+                underline: {
+                    ...stylePanel.underline,
+                    value: subtitles[selectedSubtitle].underline
+                }
+            });
+        }
+    }, [selectedSubtitle]);
 
     useEffect(() => {
         // global click listener that changes selectionScope:
@@ -104,9 +176,9 @@ export default function Editor(props) {
             }
 
             const clickSelectionScope = traverseParents(e.target);
-            console.log(`clickSelectionScope: ${clickSelectionScope}`);
             if (isEmpty(clickSelectionScope)) {
                 setSelectionScope(0);
+                setStylePanel(globalStylePanel.current || DEFAULT_STYLE_PANEL);
             } else {
                 setSelectionScope(clickSelectionScope);
             }
@@ -255,41 +327,113 @@ export default function Editor(props) {
         setSubtitles(newSubtitles);
     }
 
+    // Below useEffect is for moving to selectionScope 3, which is the user's (highlighted) selection inside an individual line.
+    // Still a working progress...
+
+    // useEffect(() => {
+    //     document.addEventListener('selectionchange', handleSelectionChange);
+
+    //     return () => document.removeEventListener('selectionchange', handleSelectionChange);
+
+    //     function handleSelectionChange() {
+    //         const selection = window.getSelection();
+
+    //         if (selection && selection.toString().trim() !== '' && selectionScope >= 2 && document.activeElement.classList.contains(SUBTITLE_OVERLAY_LINE)) {
+    //             selectionRef.current = selection.toString();
+    //             setSelectionScope(3);
+    //         } else {
+    //             selectionRef.current = '';
+    //         }
+    //     }
+    // }, []);
+
+    function handleStylePanelChange(style, value) {
+        const newSubtitles = [...subtitles];
+        if (newSubtitles[selectedSubtitle]?.lines) newSubtitles[selectedSubtitle].lines = [...newSubtitles[selectedSubtitle].lines];
+
+        const newStylePanel = { ...stylePanel };
+        newStylePanel[style].value = value;
+
+        if (!selectionScope || selectionScope === 0) {
+            // globally apply style to all subtitles
+            newSubtitles.forEach((subtitle, index) => {
+                subtitle[style] = value;
+
+                overrideStyle(subtitle.lines, style);
+            });
+
+            globalStylePanel.current = newStylePanel;
+        } else if (selectionScope === 1) {
+            // apply style to only selected subtitle
+            newSubtitles[selectedSubtitle][style] = value;
+
+            overrideStyle(newSubtitles[selectedSubtitle].lines, style);
+        } else if (selectionScope >= 2) {
+            // apply style to only the selected line the user is currently in
+            const overlayLine = document.getElementById(ACTIVE_OVERLAY_LINE_ID);
+            const lineNumber = parseInt(overlayLine?.dataset?.line);
+
+            if (lineNumber) {
+                const line = newSubtitles[selectedSubtitle].lines[lineNumber - 1];
+                const { text, dataset } = parseHtmlString(line);
+                dataset[style] = value;
+                const newLine = makeNewLineString(text, dataset);
+                newSubtitles[selectedSubtitle].lines[lineNumber - 1] = newLine;
+            }
+        }
+
+        setStylePanel(newStylePanel);
+        setSubtitles(newSubtitles);
+
+        function overrideStyle(lines, style) {
+            lines.forEach((line, _index) => {
+                const { text, dataset } = parseHtmlString(line);
+                dataset[style] = undefined;
+                const newLine = makeNewLineString(text, dataset);
+                lines[_index] = newLine;
+            });
+        }
+
+        function makeNewLineString(text, dataset) {
+            return `<span ${Object.keys(dataset).map(key => `data-${key}="${dataset[key]}"`).join(' ')}>${text}</span>`;
+        }
+    }
+
     return (
         <div className='d-flex flex-column justify-items-center align-items-center w-100'>
-            <div className='d-flex justify-items-between align-items-start'>
+            <div className='d-flex justify-items-between align-items-center m-4' style={{ gap: '30px' }}>
                 <div>
+                    <br></br>
                     <div>
-                        <br></br>
-                        <div>
-                            <button onClick={e => undo()}>Undo</button>
-                        </div>
-                        <br></br>
-                        <div>
-                            <button onClick={e => redo()}>Redo</button>
-                        </div>
-                        <br></br>
+                        <button onClick={e => undo()}>Undo</button>
                     </div>
+                    <br></br>
                     <div>
-                        <p>Selection Type: {selectionScope}</p>
+                        <button onClick={e => redo()}>Redo</button>
                     </div>
-                    <div>
-                        <Form.Group>
-                            <Form.Label>Change Number of Lines:</Form.Label>
-                            <Form.Select defaultValue={numLines} onChange={(e) => setNumLines(parseInt(e.target.value))} data-selectionscope='1'>
-                                {numLinesOptions.map((option, index) => <option value={option} key={index}>{option}</option>)}
-                            </Form.Select>
-                        </Form.Group>
-                        <Form.Group>
-                            <Form.Label>Change Number of Words Per Line:</Form.Label>
-                            <Form.Select defaultValue={numWordsPerLine} onChange={(e) => setNumWordsPerLine(parseInt(e.target.value))} data-selectionscope='1'>
-                                {numWordsPerLineOptions.map((option, index) => <option value={option} key={index}>{option}</option>)}
-                            </Form.Select>
-                        </Form.Group>
-                    </div>
+                    <br></br>
                 </div>
+                <div>
+                    <p>Selection Scope: {selectionScope}</p>
+                </div>
+                <div>
+                    <Form.Group>
+                        <Form.Label>Change Number of Lines:</Form.Label>
+                        <Form.Select defaultValue={numLines} onChange={(e) => setNumLines(parseInt(e.target.value))} data-selectionscope='1'>
+                            {numLinesOptions.map((option, index) => <option value={option} key={index}>{option}</option>)}
+                        </Form.Select>
+                    </Form.Group>
+                    <Form.Group>
+                        <Form.Label>Change Number of Words Per Line:</Form.Label>
+                        <Form.Select defaultValue={numWordsPerLine} onChange={(e) => setNumWordsPerLine(parseInt(e.target.value))} data-selectionscope='1'>
+                            {numWordsPerLineOptions.map((option, index) => <option value={option} key={index}>{option}</option>)}
+                        </Form.Select>
+                    </Form.Group>
+                </div>
+            </div>
+            <div className='d-flex justify-items-between align-items-start'>
                 <div className='overflow-scroll' style={{ maxHeight: '60vh' }}>
-                    {!loading && subtitles.map((subtitle, index) => {
+                    {subtitles.map((subtitle, index) => {
                         return (
                             <div onClick={e => handleSubtitleClick(index, 1)}
                                 ref={selectedSubtitle === index ? selectedSubtitleRef : null}
@@ -298,7 +442,7 @@ export default function Editor(props) {
                                 <div>
                                     {subtitle.lines.map((line, _index) => {
                                         return (
-                                            <InputLine value={line}
+                                            <InputLine value={parseHtmlString(line).text}
                                                 key={_index}
                                                 onChange={e => updateLine(e)}
                                                 index={index} line={_index + 1}
@@ -319,11 +463,23 @@ export default function Editor(props) {
                 <Transcript subtitles={subtitles}
                     selectedSubtitle={selectedSubtitle}
                     handleSubtitleClick={handleSubtitleClick} />
+                <div data-selectionscope={selectionScope}>
+                    <StylePanel stylePanel={stylePanel} handleStylePanelChange={handleStylePanelChange} />
+                    {/* {Object.keys(styleButtons).map((style, index) => {
+                        return (
+                            <div key={index} data-selectionscope={selectionScope}>
+                                <button onClick={e => handleStylePanelChange(style, styleButtons[style].value)}>{styleButtons[style].name}</button>
+                            </div>
+                        )
+                    })} */}
+                    <ExportPanel subtitles={subtitles} />
+                </div>
                 <VideoPlayer subtitles={subtitles}
                     setSubtitles={setSubtitles}
                     videoTimeSec={videoTimeSec}
                     setVideoTimeSec={setVideoTimeSec}
                     selectionScope={selectionScope}
+                    selectedSubtitle={selectedSubtitle}
                     handleSubtitleClick={handleSubtitleClick} />
             </div>
             <Timeline subtitles={subtitles}
