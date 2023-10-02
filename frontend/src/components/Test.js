@@ -1,22 +1,84 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
+import { useVideoUpload } from '../contexts/VideoUploadContext';
 
-export default function Test(props) {
-    const { state, stateFunction } = props;
+export default function Test() {
+    const [loaded, setLoaded] = useState(false);
+    const ffmpegRef = useRef(new FFmpeg());
+    const videoRef = useRef(null);
+    const messageRef = useRef(null);
 
-    function handleClick() {
-        console.log(state);
-        stateFunction(!state);
-        console.log(state);
+    const { videoFile } = useVideoUpload();
 
-        setTimeout(() => console.log(state), 0);
+    useEffect(() => {
+        load();
+    }, [videoFile]);
+
+    async function load() {
+        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.2/dist/umd'
+        const ffmpeg = ffmpegRef.current;
+        ffmpeg.on('log', ({ message }) => {
+            messageRef.current.innerHTML = message;
+            console.log(message);
+        });
+        // toBlobURL is used to bypass CORS issue, urls with the same
+        // domain can be used directly.
+        await ffmpeg.load({
+            coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+            wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        });
+        setLoaded(true);
+        setTimeout(() => console.log(ffmpegRef.current), 0);
+    }
+
+    async function transcode() {
+        const videoURL = URL.createObjectURL(videoFile);
+
+        const ffmpeg = ffmpegRef.current;
+        await ffmpeg.writeFile('input.mp4', await fetchFile(videoURL));
+        await ffmpeg.exec(['-i', 'input.mp4', 'output.mp4']);
+        const data = await ffmpeg.readFile('output.mp4');
+        videoRef.current.src = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
     }
 
     return (
-        <div>
-            <button onClick={e => handleClick()}>Test Button</button>
-        </div>
-    )
+        loaded
+            ? (
+                <>
+                    <video ref={videoRef} controls></video><br />
+                    <button onClick={transcode}>Transcode</button>
+                    <p ref={messageRef}></p>
+                    <p>Open Developer Tools (Ctrl+Shift+I) to View Logs</p>
+                </>
+            )
+            : (
+                <button onClick={load}>Load ffmpeg-core (~31 MB)</button>
+            )
+    );
 }
+
+
+
+// import React from 'react';
+
+// export default function Test(props) {
+//     const { state, stateFunction } = props;
+
+//     function handleClick() {
+//         console.log(state);
+//         stateFunction(!state);
+//         console.log(state);
+
+//         setTimeout(() => console.log(state), 0);
+//     }
+
+//     return (
+//         <div>
+//             <button onClick={e => handleClick()}>Test Button</button>
+//         </div>
+//     )
+// }
 
 
 

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import editorOptions from '../config/editorOptions.json';
+import ffmpegFonts from '../config/ffmpegFonts.json';
 
 export default function StylePanel(props) {
     const { stylePanel, handleStylePanelChange } = props;
@@ -42,9 +43,9 @@ export default function StylePanel(props) {
                 <Form.Label>Font</Form.Label>
                 <Form.Select onChange={e => handleStylePanelChange('font', e.target.value)}
                     ref={fontInputRef} defaultValue={stylePanel.font.value}>
-                    {editorOptions.font.map((option, index) => (
-                        <option value={option} key={index}>
-                            {option}
+                    {ffmpegFonts.map((font, index) => (
+                        <option value={font.family} key={index}>
+                            {font.name}
                         </option>
                     ))}
                 </Form.Select>

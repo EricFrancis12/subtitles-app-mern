@@ -472,7 +472,8 @@ export default function Editor(props) {
                             </div>
                         )
                     })} */}
-                    <ExportPanel subtitles={subtitles} />
+                    <ExportPanel subtitles={subtitles} globalStylePanel={globalStylePanel.current} />
+                    <Test />
                 </div>
                 <VideoPlayer subtitles={subtitles}
                     setSubtitles={setSubtitles}

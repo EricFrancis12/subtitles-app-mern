@@ -1,0 +1,38 @@
+[
+    {
+        "name": "Arial",
+        "family": "ffmpegFonts.Arial",
+        "format": "truetype",
+        "fileName": "Arial.ttf"
+    },
+    {
+        "name": "Arial Rounded Bold",
+        "family": "ffmpegFonts.Arial_Rounded_MT_Bold",
+        "format": "truetype",
+        "fileName": "Arial_Rounded_MT_Bold.ttf"
+    },
+    {
+        "name": "Barlow Black",
+        "family": "ffmpegFonts.Barlow_Black",
+        "format": "truetype",
+        "fileName": "Barlow_Black.ttf"
+    },
+    {
+        "name": "Fortnite",
+        "family": "ffmpegFonts.Burbank_Big_Cd_Bk",
+        "format": "truetype",
+        "fileName": "Burbank_Big_Cd_Bk.ttf"
+    },
+    {
+        "name": "Georgia",
+        "family": "ffmpegFonts.Georgia",
+        "format": "truetype",
+        "fileName": "Georgia.ttf"
+    },
+    {
+        "name": "Papyrus",
+        "family": "ffmpegFonts.Papyrus",
+        "format": "truetype",
+        "fileName": "Papyrus.ttf"
+    }
+]

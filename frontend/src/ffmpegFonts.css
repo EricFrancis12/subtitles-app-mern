@@ -1,0 +1,30 @@
+@font-face {
+	font-family: 'ffmpegFonts.Arial';
+	src: url('./fonts/Arial.ttf') format('truetype');
+}
+
+@font-face {
+	font-family: 'ffmpegFonts.Arial_Rounded_MT_Bold';
+	src: url('./fonts/Arial_Rounded_MT_Bold.ttf') format('truetype');
+}
+
+@font-face {
+	font-family: 'ffmpegFonts.Barlow_Black';
+	src: url('./fonts/Barlow_Black.ttf') format('truetype');
+}
+
+@font-face {
+	font-family: 'ffmpegFonts.Burbank_Big_Cd_Bk';
+	src: url('./fonts/Burbank_Big_Cd_Bk.ttf') format('truetype');
+}
+
+@font-face {
+	font-family: 'ffmpegFonts.Georgia';
+	src: url('./fonts/Georgia.ttf') format('truetype');
+}
+
+@font-face {
+	font-family: 'ffmpegFonts.Papyrus';
+	src: url('./fonts/Papyrus.ttf') format('truetype');
+}
+
