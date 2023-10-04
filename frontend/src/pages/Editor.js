@@ -17,7 +17,7 @@ import Transcript from '../components/Transcript';
 import VideoPlayer from '../components/VideoPlayer';
 import { isEmpty } from '../utils/utils';
 import { SUBTITLE_OVERLAY_LINE } from '../components/VideoPlayer';
-import { ACTIVE_OVERLAY_LINE_ID, parseHtmlString } from '../components/VideoPlayer';
+import { ACTIVE_OVERLAY_LINE_ID } from '../components/VideoPlayer';
 import StylePanel from '../components/StylePanel';
 import ExportPanel from '../components/ExportPanel';
 
@@ -379,7 +379,7 @@ export default function Editor(props) {
 
             if (lineNumber) {
                 const line = newSubtitles[selectedSubtitle].lines[lineNumber - 1];
-                const { text, dataset } = parseHtmlString(line);
+                const { text, dataset } = Subtitle.parseLine(line);
                 dataset[style] = value;
                 const newLine = makeNewLineString(text, dataset);
                 newSubtitles[selectedSubtitle].lines[lineNumber - 1] = newLine;
@@ -391,7 +391,7 @@ export default function Editor(props) {
 
         function overrideStyle(lines, style) {
             lines.forEach((line, _index) => {
-                const { text, dataset } = parseHtmlString(line);
+                const { text, dataset } = Subtitle.parseLine(line);
                 dataset[style] = undefined;
                 const newLine = makeNewLineString(text, dataset);
                 lines[_index] = newLine;
@@ -446,7 +446,7 @@ export default function Editor(props) {
                                 <div>
                                     {subtitle.lines.map((line, _index) => {
                                         return (
-                                            <InputLine value={parseHtmlString(line).text}
+                                            <InputLine value={Subtitle.parseLine(line).text}
                                                 key={_index}
                                                 onChange={e => updateLine(e)}
                                                 index={index} line={_index + 1}

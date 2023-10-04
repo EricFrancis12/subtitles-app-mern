@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useVideoUpload } from '../contexts/VideoUploadContext';
-import { parseHtmlString } from './VideoPlayer';
+import Subtitle from '../models/Subtitle';
 
 const SCROLLING_CONSTANT = 4; // increase/decrease this to set the speed at which the timeline expands/contracts when scrolled
 const MIN_TIMELINE_WIDTH = 1000;
@@ -103,7 +103,7 @@ export default function Timeline(props) {
                             {subtitle.lines.map((line, _index) => {
                                 return (
                                     <div key={_index}>
-                                        {parseHtmlString(line).text}
+                                        {Subtitle.parseLine(line).text}
                                     </div>
                                 )
                             })}

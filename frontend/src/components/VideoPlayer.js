@@ -2,40 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useVideoUpload } from '../contexts/VideoUploadContext';
 import useDragger from '../hooks/useDragger';
 import { isEmpty } from '../utils/utils';
+import Subtitle from '../models/Subtitle';
 
 export const SUBTITLE_OVERLAY = 'SUBTITLE_OVERLAY';
 export const SUBTITLE_OVERLAY_LINE = 'SUBTITLE_OVERLAY_LINE';
 export const ACTIVE_OVERLAY_LINE_ID = 'ACTIVE_OVERLAY_LINE_ID';
 const VIDEO_BUTTON_OPTIONS = { PLAY: 'PLAY', PAUSE: 'PAUSE' };
 const VIDEO_UPDATE_RATE_MS = 100;
-
-export function parseHtmlString(htmlString) {
-    // Create a temporary div element to parse the HTML string
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlString;
-
-    // Check if there is an outer element
-    if (tempDiv.children.length === 1) {
-        const innerText = tempDiv.children[0].textContent;
-
-        // Convert dataset attributes to an object
-        const dataset = {};
-        const attributes = tempDiv.children[0].attributes;
-        for (let i = 0; i < attributes.length; i++) {
-            const attribute = attributes[i];
-            if (attribute.name.startsWith('data-')) {
-                const value = attribute.value === 'true' || attribute.value === 'false' ? JSON.parse(attribute.value) : attribute.value;
-                dataset[attribute.name.substring(5)] = value;
-            }
-        }
-
-        tempDiv.remove();
-        return { text: innerText, dataset };
-    } else {
-        tempDiv.remove();
-        return { text: htmlString, dataset: {} }; // No outer element, return the inner text
-    }
-}
 
 export default function VideoPlayer(props) {
     const { subtitles, setSubtitles, videoTimeSec, setVideoTimeSec, selectionScope, selectedSubtitle, handleSubtitleClick } = props;
@@ -183,7 +156,7 @@ export default function VideoPlayer(props) {
                     <div className='position-relative bg-primary overflow-hidden' style={{ height: '400px', width: '400px' }}>
                         <div id='SUBTITLE_OVERLAY' ref={subtitleOverlayRef} className='position-absolute border border-black' style={{ cursor: 'pointer', zIndex: '10' }}>
                             {subtitleOverlay?.lines?.map((line, _index) => {
-                                const { text, dataset } = parseHtmlString(line);
+                                const { text, dataset } = Subtitle.parseLine(line);
 
                                 const font = dataset.font ?? subtitleOverlay.font ?? undefined;
                                 const fontSize = dataset.fontSize ?? subtitleOverlay.fontSize ?? undefined;

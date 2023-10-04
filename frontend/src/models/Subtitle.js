@@ -1,6 +1,5 @@
 import defaultEditorSettings from '../config/defaultEditorSettings.json';
 import { highest, mean } from '../utils/utils';
-import { parseHtmlString } from '../components/VideoPlayer';
 
 export default class Subtitle {
     constructor(props) {
@@ -108,7 +107,7 @@ export default class Subtitle {
             const { lines, align, positionX, positionY } = props;
 
             return lines.map((line, _index) => {
-                const { text, dataset } = parseHtmlString(line);
+                const { text, dataset } = Subtitle.parseLine(line);
 
                 let alignment = '';
                 switch (align) {
@@ -156,6 +155,34 @@ export default class Subtitle {
 }
 
 
+
+Subtitle.parseLine = function (line) {
+    // Create a temporary div element to parse the HTML string
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = line;
+
+    // Check if there is an outer element
+    if (tempDiv.children.length === 1) {
+        const innerText = tempDiv.children[0].textContent;
+
+        // Convert dataset attributes to an object
+        const dataset = {};
+        const attributes = tempDiv.children[0].attributes;
+        for (let i = 0; i < attributes.length; i++) {
+            const attribute = attributes[i];
+            if (attribute.name.startsWith('data-')) {
+                const value = attribute.value === 'true' || attribute.value === 'false' ? JSON.parse(attribute.value) : attribute.value;
+                dataset[attribute.name.substring(5)] = value;
+            }
+        }
+
+        tempDiv.remove();
+        return { text: innerText, dataset };
+    } else {
+        tempDiv.remove();
+        return { text: htmlString, dataset: {} }; // No outer element, return the inner text
+    }
+}
 
 Subtitle.makeSubtitlesFile = function (props) {
     const { subtitles, videoInfo, globalStyles } = props;
@@ -214,6 +241,6 @@ Subtitle.makeSubtitlesFile = function (props) {
         '[Events]',
         'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
         '',
-        subtitles.map(subtitle => subtitle.createDialogueLine()).join('')
+        subtitles.map(subtitle => subtitle.createDialogueLine(globalStyles)).join('')
     ].join('\n');
 }

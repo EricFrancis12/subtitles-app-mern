@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { parseHtmlString } from './VideoPlayer';
+import Subtitle from '../models/Subtitle';
 
 export default function Transcript(props) {
     const { subtitles, selectedSubtitle, handleSubtitleClick } = props;
@@ -23,7 +23,7 @@ export default function Transcript(props) {
                                 onClick={e => handleSubtitleClick(index, 1)}
                                 className={(selectedSubtitle === index ? 'selected-subtitle' : 'bg-secondary') + ' display-inline-block border border-black m-1 p-1 rounded'}
                                 data-selectionscope='1'>
-                                {subtitle.lines.map(line => parseHtmlString(line).text).join(' ')}
+                                {subtitle.lines.map(line => Subtitle.parseLine(line).text).join(' ')}
                             </span>
                         )
                     } else {
