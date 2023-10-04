@@ -11,14 +11,13 @@ export default function StylePanel(props) {
     const fontColorInputRef = useRef();
     const borderWInputRef = useRef();
     const borderColorInputRef = useRef();
-    const backgroundColorInputRef = useRef();
     const boldInputRef = useRef();
     const italicInputRef = useRef();
     const underlineInputRef = useRef();
     const alignInputRef = useRef();
 
     function handleButtonClick(style, e) {
-        const value = Boolean(e.target.dataset.value);
+        const value = Boolean(JSON.parse(e.target.dataset.value));
         const newValue = !value;
         e.target.dataset.value = newValue;
         handleStylePanelChange(style, newValue);
@@ -30,7 +29,6 @@ export default function StylePanel(props) {
         fontColorInputRef.current.value = stylePanel.fontColor.value;
         borderWInputRef.current.value = stylePanel.borderW.value;
         borderColorInputRef.current.value = stylePanel.borderColor.value;
-        backgroundColorInputRef.current.value = stylePanel.backgroundColor.value;
         boldInputRef.current.value = stylePanel.bold.value;
         italicInputRef.current.value = stylePanel.italic.value;
         underlineInputRef.current.value = stylePanel.underline.value;
@@ -81,11 +79,6 @@ export default function StylePanel(props) {
                 <Form.Label>Border Color</Form.Label>
                 <Form.Control onChange={e => handleStylePanelChange('borderColor', e.target.value)}
                     ref={borderColorInputRef} type='color' defaultValue={stylePanel.borderColor.value}></Form.Control>
-            </Form.Group>
-            <Form.Group>
-                <Form.Label>Background Color</Form.Label>
-                <Form.Control onChange={e => handleStylePanelChange('backgroundColor', e.target.value)}
-                    ref={backgroundColorInputRef} type='color' defaultValue={stylePanel.backgroundColor.value}></Form.Control>
             </Form.Group>
             <Form.Group>
                 <Button onClick={e => handleButtonClick('bold', e)}

@@ -50,6 +50,10 @@ export default function Editor(props) {
     const selectionRef = useRef();
     const globalStylePanel = useRef();
 
+    useEffect(() => {
+        globalStylePanel.current = { ...stylePanel };
+    }, []);
+
     const [loading, setLoading] = useState(false);
     const [selectedSubtitle, setSelectedSubtitle] = useState(null);
     const [selectionScope, setSelectionScope] = useState(0);
@@ -111,9 +115,6 @@ export default function Editor(props) {
         //         block: 'end' // 'start', 'center', or 'end'
         //     });
         // }
-
-        console.log(selectedSubtitle);
-        console.log(subtitles[selectedSubtitle]);
 
         if (!isEmpty(selectedSubtitle)) {
             setStylePanel({
@@ -370,6 +371,9 @@ export default function Editor(props) {
             overrideStyle(newSubtitles[selectedSubtitle].lines, style);
         } else if (selectionScope >= 2) {
             // apply style to only the selected line the user is currently in
+
+            if (style === 'align') return; // align is applied only at the subtitle level (selectionScope of 1 or less), not to individual lines
+
             const overlayLine = document.getElementById(ACTIVE_OVERLAY_LINE_ID);
             const lineNumber = parseInt(overlayLine?.dataset?.line);
 
@@ -472,7 +476,7 @@ export default function Editor(props) {
                             </div>
                         )
                     })} */}
-                    <ExportPanel subtitles={subtitles} globalStylePanel={globalStylePanel.current} />
+                    <ExportPanel subtitles={subtitles} globalStylePanel={globalStylePanel.current} selectionScope={selectionScope} />
                     <Test />
                 </div>
                 <VideoPlayer subtitles={subtitles}

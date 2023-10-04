@@ -9,7 +9,7 @@ import Subtitle from '../models/Subtitle';
 const ALLOWED_FILE_EXTS = ['mp4', 'mov', 'mkv', 'flv', 'avi', 'webm', 'wmv'];
 
 export default function ExportPanel(props) {
-    const { subtitles, globalStylePanel } = props;
+    const { subtitles, globalStylePanel, selectionScope } = props;
 
     const [loaded, setLoaded] = useState(false);
     const [exporting, setExporting] = useState(false);
@@ -34,23 +34,27 @@ export default function ExportPanel(props) {
         });
         // toBlobURL is used to bypass CORS issue, urls with the same
         // domain can be used directly.
-        await ffmpeg.load({
-            coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-            wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm')
-        });
 
-        // create necessary dirs in virtual file system:
-        const virtualDirContents = await ffmpeg.listDir('/');
-        if (virtualDirContents.findIndex(dir => dir.name === 'fonts') === -1) await ffmpeg.createDir('fonts');
-        if (virtualDirContents.findIndex(dir => dir.name === 'output') === -1) await ffmpeg.createDir('output');
+        try {
+            await ffmpeg.load({
+                coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm')
+            });
 
-        // write fonts to virtual file system:
-        for (let i = 0; i < ffmpegFonts.length; i++) {
-            const fontFileData = await fetchFile(`../fonts/${ffmpegFonts[i].fileName}`);
-            await ffmpeg.writeFile(`fonts/${ffmpegFonts[i].fileName}`, fontFileData);
+            // create necessary dirs in virtual file system:
+            const virtualDirContents = await ffmpeg.listDir('/');
+            if (virtualDirContents.findIndex(dir => dir.name === 'fonts') === -1) await ffmpeg.createDir('fonts');
+
+            // write fonts to virtual file system:
+            for (let i = 0; i < ffmpegFonts.length; i++) {
+                const fontFileData = await fetchFile(`../fonts/${ffmpegFonts[i].fileName}`);
+                await ffmpeg.writeFile(`fonts/${ffmpegFonts[i].fileName}`, fontFileData);
+            }
+
+            setLoaded(true);
+        } catch (err) {
+            console.error(err);
         }
-
-        setLoaded(true);
     }
 
     async function handleExportClick() {
@@ -59,18 +63,22 @@ export default function ExportPanel(props) {
 
         const timestamp = Date.now();
         const fileExt = fileExtRef.current.value;
-        const outputVideoFilePath = `output/${timestamp}.${fileExt}`;
-        const outputSubtitlesFilePath = `output/${timestamp}.ass`;
+        const outputVideoFilePath = `${timestamp}.${fileExt}`;
+        const outputSubtitlesFilePath = `${timestamp}.ass`;
         const videoURL = URL.createObjectURL(videoFile);
         let exportResult;
 
         try {
             // impliment ffmpeg.wasm:
             const ffmpeg = ffmpegRef.current;
-            const subtitlesFile = Subtitle.makeSubtitlesFile({ subtitles, videoInfo, styles: globalStylePanel });
+            const subtitlesFile = Subtitle.makeSubtitlesFile({ subtitles, videoInfo, globalStyles: globalStylePanel });
+
             await ffmpeg.writeFile(outputSubtitlesFilePath, subtitlesFile);
             await ffmpeg.writeFile('input.mp4', await fetchFile(videoURL));
-            await ffmpeg.exec(['-i', `input.mp4`, '-vf', `subtitles=/subtitles.ass:fontsdir=/fonts`, outputVideoFilePath]);
+            await ffmpeg.exec(['-i', `input.mp4`, '-vf', `subtitles=${outputSubtitlesFilePath}:fontsdir=/fonts`, outputVideoFilePath]);
+
+            // try this way:
+            // await ffmpeg.exec(['-i', 'input.mp4', '-vf', `subtitles=${outputSubtitlesFilePath}:fontsdir=/fonts`, outputVideoFilePath]);
 
             exportResult = {
                 videoFilePath: outputVideoFilePath,
@@ -98,16 +106,6 @@ export default function ExportPanel(props) {
         a.click();
     }
 
-    // async function transcode() {
-    //     const videoURL = URL.createObjectURL(videoFile);
-
-    //     const ffmpeg = ffmpegRef.current;
-    //     await ffmpeg.writeFile('input.mp4', await fetchFile(videoURL));
-    //     await ffmpeg.exec(['-i', 'input.mp4', 'output.mp4']);
-    //     const data = await ffmpeg.readFile('output.mp4');
-    //     videoRef.current.src = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
-    // }
-
     return (
         <div>
             {exportResults.length > 0
@@ -134,9 +132,9 @@ export default function ExportPanel(props) {
                 </div>
                 : <>
                     <div>
-                        {exportResults.map(result => {
+                        {exportResults.map((result, index) => {
                             return (
-                                <p>{JSON.stringify(result)}</p>
+                                <p key={index}>{JSON.stringify(result)}</p>
                             )
                         })}
                     </div>
@@ -150,7 +148,7 @@ export default function ExportPanel(props) {
                             })}
                         </Form.Select>
                     </Form>
-                    <Button onClick={e => handleExportClick()}>Export</Button>
+                    <Button onClick={e => handleExportClick()} data-selectionscope={selectionScope}>Export</Button>
                 </>}
         </div>
     )

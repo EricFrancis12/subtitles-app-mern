@@ -24,14 +24,16 @@ export function parseHtmlString(htmlString) {
         for (let i = 0; i < attributes.length; i++) {
             const attribute = attributes[i];
             if (attribute.name.startsWith('data-')) {
-                dataset[attribute.name.substring(5)] = attribute.value;
+                const value = attribute.value === 'true' || attribute.value === 'false' ? JSON.parse(attribute.value) : attribute.value;
+                dataset[attribute.name.substring(5)] = value;
             }
         }
 
+        tempDiv.remove();
         return { text: innerText, dataset };
     } else {
-        // No outer element, return the inner text
-        return { text: htmlString, dataset: {} };
+        tempDiv.remove();
+        return { text: htmlString, dataset: {} }; // No outer element, return the inner text
     }
 }
 
@@ -163,6 +165,17 @@ export default function VideoPlayer(props) {
         setSubtitles(newSubtitles);
     }
 
+    function textShadowStyle(borderW, borderColor) {
+        return [
+            borderColor + ' 0px 0px',
+            ', ' + borderColor + ' -0.5px 0px, ' + borderColor + ' 0px 0.5px, ' + borderColor + ' 0.5px 0px, ' + borderColor + ' 0px -0.5px',
+            ', ' + borderColor + ' -1px 0px, ' + borderColor + ' 0px 1px, ' + borderColor + ' 1px 0px, ' + borderColor + ' 0px -1px',
+            ', ' + borderColor + ' -1.5px 0px, ' + borderColor + ' 0px 1.5px, ' + borderColor + ' 1.5px 0px, ' + borderColor + ' 0px -1.5px',
+            ', ' + borderColor + ' -2px 0px, ' + borderColor + ' 0px 2px, ' + borderColor + ' 2px 0px, ' + borderColor + ' 0px -2px',
+            ', ' + borderColor + ' -2.5px 0px, ' + borderColor + ' 0px 2.5px, ' + borderColor + ' 2.5px 0px, ' + borderColor + ' 0px -2.5px'
+        ].slice(0, borderW);
+    }
+
     return (
         <div>
             <div>
@@ -177,7 +190,6 @@ export default function VideoPlayer(props) {
                                 const fontColor = dataset.fontColor ?? subtitleOverlay.fontColor ?? undefined;
                                 const borderW = dataset.borderW ?? subtitleOverlay.borderW ?? undefined;
                                 const borderColor = dataset.borderColor ?? subtitleOverlay.borderColor ?? undefined;
-                                const backgroundColor = dataset.backgroundColor ?? subtitleOverlay.backgroundColor ?? undefined;
                                 const bold = dataset.bold ?? subtitleOverlay.bold ?? undefined;
                                 const italic = dataset.italic ?? subtitleOverlay.italic ?? undefined;
                                 const underline = dataset.underline ?? subtitleOverlay.underline ?? undefined;
@@ -195,9 +207,7 @@ export default function VideoPlayer(props) {
                                             fontFamily: font,
                                             fontSize: fontSize,
                                             color: fontColor,
-                                            borderWidth: borderW,
-                                            borderColor: borderColor,
-                                            backgroundColor: backgroundColor,
+                                            textShadow: textShadowStyle(borderW, borderColor),
                                             fontWeight: bold,
                                             fontStyle: italic,
                                             textDecoration: underline,

@@ -18,7 +18,6 @@ export default class Subtitle {
         this.fontColor = options?.fontColor || userClient?.defaultEditorSettings?.fontColor || defaultEditorSettings.fontColor;
         this.borderW = options?.borderW || userClient?.defaultEditorSettings?.borderW || defaultEditorSettings.borderW;
         this.borderColor = options?.borderColor || userClient?.defaultEditorSettings?.borderColor || defaultEditorSettings.borderColor;
-        this.backgroundColor = options?.backgroundColor || userClient?.defaultEditorSettings?.backgroundColor || defaultEditorSettings.backgroundColor;
         this.positionX = options?.positionX || userClient?.defaultEditorSettings?.positionX || defaultEditorSettings.positionX;
         this.positionY = options?.positionY || userClient?.defaultEditorSettings?.positionY || defaultEditorSettings.positionY;
         this.bold = options?.bold || userClient?.defaultEditorSettings?.bold || defaultEditorSettings.bold;
@@ -73,8 +72,9 @@ export default class Subtitle {
         return i - 1;
     }
 
-    createDialogueLine() {
+    createDialogueLine(globalStyles) {
         return [
+            'Dialogue: ',
             '0,',
             `${formatTime(this.startSec)},`,
             `${formatTime(this.endSec)},`,
@@ -84,7 +84,7 @@ export default class Subtitle {
             '0,',
             '0,',
             ',',
-            formatText(this.lines)
+            formatText(this, globalStyles)
         ].join('');
 
         function formatTime(seconds) {
@@ -104,33 +104,52 @@ export default class Subtitle {
             return `${formattedHours}:${remainingMinutes}:${remainingSeconds}`;
         }
 
-        function formatText(lines) {
+        function formatText(props, globalStyles) {
+            const { lines, align, positionX, positionY } = props;
+
             return lines.map((line, _index) => {
                 const { text, dataset } = parseHtmlString(line);
-                const { font, fontSize, fontColor, borderW, borderColor, backgroundColor, positionX, positionY, bold, italic, underline, align } = dataset;
+
+                let alignment = '';
+                switch (align) {
+                    case 'left': alignment = '4'; break;
+                    case 'center': alignment = '5'; break;
+                    case 'right': alignment = '6'; break;
+                }
+
+                const font = dataset.font ?? globalStyles.font ?? '';
+                const fontSize = dataset.fontSize ?? globalStyles.fontSize ?? '';
+                const fontColor = dataset.fontColor ?? globalStyles.fontColor ?? '';
+                const borderW = dataset.borderW ?? globalStyles.borderW ?? '';
+                const borderColor = dataset.borderColor ?? globalStyles.borderColor ?? '';
+                const bold = dataset.bold ?? globalStyles.bold ?? '';
+                const italic = dataset.italic ?? globalStyles.italic ?? '';
+                const underline = dataset.underline ?? globalStyles.underline ?? '';
 
                 return [
                     '{',
+                    `\\pos(${formatPos(positionX)},${formatPos(positionY)})`,
+                    `\\an${alignment}`,
                     `\\fn${font}`,
                     `\\fs${fontSize}`,
                     `\\c&H${fontColor}`,
                     `\\bord${borderW}`,
                     `\\3c&H${borderColor}`,
-                    // backgroundColor?
-                    `\\pos(${formatPos(positionX, positionY)})`,
                     bold ? '\\b1$' : '',
                     italic ? '\\i1' : '',
                     underline ? '\\u1' : '',
-                    // align?
                     '}',
                     text,
                     '{\\r}',
-                    _index + 1 === lines.length ? '' : '\\N'
+                    _index === lines.length - 1 ? '' : '\\N'
                 ].join('');
             }).join('');
 
-            function formatPos(positionX, positionY) {
-                // ...
+            function formatPos(position) {
+                // Change this later, because this is not accurate.
+                // It should calculate position based on how ffmpeg burns them in - not exactly sure how it works yet...
+                // Need to test.
+                return position;
             }
         }
     }
@@ -139,18 +158,47 @@ export default class Subtitle {
 
 
 Subtitle.makeSubtitlesFile = function (props) {
-    const { subtitles, videoInfo, styles } = props;
+    const { subtitles, videoInfo, globalStyles } = props;
     const { height, width } = videoInfo;
-    const { font, fontSize, fontColor, bold, italic, underline,  } = styles;
+    const { font, fontSize, fontColor, bold, italic, underline, } = globalStyles;
+
+    console.log(globalStyles);
 
     const now = new Date();
     const month = now.getMonth() + 1;
     const day = now.getDate();
     const year = now.getFullYear();
 
-    
+    // 'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, TertiaryColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
+    // `Style: Default,${font},${fontSize},${fontColor},&H000000FF,&H80000000,&H80000000,${bold},${italic},${underline},${def.Strikeout},${def.ScaleX},${def.ScaleY},${def.Spacing},${def.Angle},${def.BorderStyle},${def.Outline},${def.Shadow},${def.Alignment},${def.MarginL},${def.MarginR},${def.MarginV},${def.Encoding}`,
 
-    let result = [
+    const headerStyles = [
+        { Format: 'Name', Style: 'Default' },
+        { Format: 'Fontname', Style: font.value },
+        { Format: 'Fontsize', Style: fontSize.value },
+        { Format: 'PrimaryColour', Style: `&H00${fontColor.value}` },
+        { Format: 'SecondaryColour', Style: '&H000000FF' },
+        { Format: 'TertiaryColour', Style: '&H80000000' },
+        { Format: 'BackColour', Style: '&H80000000' },
+        { Format: 'Bold', Style: bold.value === true ? '1' : '0' },
+        { Format: 'Italic', Style: italic.value === true ? '1' : '0' },
+        { Format: 'Underline', Style: underline.value === true ? '1' : '0' },
+        { Format: 'StrikeOut', Style: '0' },
+        { Format: 'ScaleX', Style: '100' },
+        { Format: 'ScaleY', Style: '100' },
+        { Format: 'Spacing', Style: '0' },
+        { Format: 'Angle', Style: '0' },
+        { Format: 'BorderStyle', Style: '1' },
+        { Format: 'Outline', Style: '2' },
+        { Format: 'Shadow', Style: '0' },
+        { Format: 'Alignment', Style: '5' },
+        { Format: 'MarginL', Style: '30' },
+        { Format: 'MarginR', Style: '30' },
+        { Format: 'MarginV', Style: '10' },
+        { Format: 'Encoding', Style: '1' }
+    ];
+
+    return [
         '[Script Info]',
         `; Created on ${month}-${day}-${year}`,
         'WrapStyle: 1',
@@ -159,18 +207,13 @@ Subtitle.makeSubtitlesFile = function (props) {
         `PlayResY: ${height}`,
         '',
         '[V4+ Styles]',
-        'Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, TertiaryColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding',
+        `Format: ${headerStyles.map(item => item.Format).join(', ')}`,
         '',
-        `Style: Default,${font},${fontSize},${fontColor},&H000000FF,&H80000000,&H80000000,${bold},${italic},${underline},${def.Strikeout},${def.ScaleX},${def.ScaleY},${def.Spacing},${def.Angle},${def.BorderStyle},${def.Outline},${def.Shadow},${def.Alignment},${def.MarginL},${def.MarginR},${def.MarginV},${def.Encoding}`,
+        `Style: ${headerStyles.map(item => item.Style).join(', ')}`,
         '',
         '[Events]',
         'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
-        ''
+        '',
+        subtitles.map(subtitle => subtitle.createDialogueLine()).join('')
     ].join('\n');
-
-    subtitles.forEach(subtitle => {
-        result += subtitle.createDialogueLine();
-    });
-
-    return result;
 }
