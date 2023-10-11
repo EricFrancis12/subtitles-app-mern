@@ -1,15 +1,18 @@
-const crypto = require('crypto');
+import dotenv from 'dotenv';
+dotenv.config();
 
-const brevo = require('sib-api-v3-sdk');
+import crypto from 'crypto';
+
+import brevo from 'sib-api-v3-sdk';
 brevo.ApiClient.instance.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
 
-const bcrypt = require('bcrypt');
+import bcrypt from 'bcrypt';
 const hash = 10;
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
-const { frontendRootUrl } = require('../utils/utils');
-const defaultEditorSettings = require('../../frontend/src/config/defaultEditorSettings.json');
+import { frontendRootUrl } from '../utils/utils.js';
+import defaultEditorSettings from '../../frontend/src/config/defaultEditorSettings.json' assert { type: 'json' };
 
 
 
@@ -275,4 +278,4 @@ User.hashPassword = async function (password) {
 
 
 
-module.exports = User;
+export default User;

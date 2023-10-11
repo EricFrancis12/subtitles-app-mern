@@ -1,13 +1,13 @@
-const User = require('../../models/User');
+import User from '../../models/User.js';
 
-const express = require('express');
-const router = express.Router();
+import express from 'express';
+export const router = express.Router();
 
-const useBody = require('../../middleware/format/useBody');
+import useBody from '../../middleware/format/useBody.js';
 
 
 
-router.post('/', (req, res, next) => useBody(req, res, next, ['email', 'password']), async (req, res) => {    
+router.post('/', (req, res, next) => useBody(req, res, next, ['email', 'password']), async (req, res) => {
     let user = await User.findOne({ email: req.body.email })
         .catch(err => {
             console.error(err);
@@ -33,7 +33,3 @@ router.post('/', (req, res, next) => useBody(req, res, next, ['email', 'password
 
     res.status(200).json({ success: true, loggedIn: true });
 });
-
-
-
-module.exports = router;

@@ -116,24 +116,24 @@ export default class Subtitle {
                     case 'right': alignment = '6'; break;
                 }
 
-                const font = dataset.font ?? globalStyles.font ?? '';
-                const fontSize = dataset.fontSize ?? globalStyles.fontSize ?? '';
-                const fontColor = dataset.fontColor ?? globalStyles.fontColor ?? '';
-                const borderW = dataset.borderW ?? globalStyles.borderW ?? '';
-                const borderColor = dataset.borderColor ?? globalStyles.borderColor ?? '';
-                const bold = dataset.bold ?? globalStyles.bold ?? '';
-                const italic = dataset.italic ?? globalStyles.italic ?? '';
-                const underline = dataset.underline ?? globalStyles.underline ?? '';
+                const font = dataset.font ?? globalStyles.font.value ?? '';
+                const fontSize = dataset.fontSize ?? globalStyles.fontSize.value ?? '';
+                const fontColor = dataset.fontColor ?? globalStyles.fontColor.value ?? '';
+                const borderW = dataset.borderW ?? globalStyles.borderW.value ?? '';
+                const borderColor = dataset.borderColor ?? globalStyles.borderColor.value ?? '';
+                const bold = dataset.bold ?? globalStyles.bold.value ?? '';
+                const italic = dataset.italic ?? globalStyles.italic.value ?? '';
+                const underline = dataset.underline ?? globalStyles.underline.value ?? '';
 
                 return [
                     '{',
-                    `\\pos(${formatPos(positionX)},${formatPos(positionY)})`,
+                    `\\pos(${formatX(positionX)},${formatY(positionY)})`,
                     `\\an${alignment}`,
                     `\\fn${font}`,
-                    `\\fs${fontSize}`,
-                    `\\c&H${fontColor}`,
+                    `\\fs${formatFontSize(fontSize)}`,
+                    `\\c&H${formatColor(fontColor)}`,
                     `\\bord${borderW}`,
-                    `\\3c&H${borderColor}`,
+                    `\\3c&H${formatColor(borderColor)}`,
                     bold ? '\\b1$' : '',
                     italic ? '\\i1' : '',
                     underline ? '\\u1' : '',
@@ -144,11 +144,24 @@ export default class Subtitle {
                 ].join('');
             }).join('');
 
-            function formatPos(position) {
-                // Change this later, because this is not accurate.
-                // It should calculate position based on how ffmpeg burns them in - not exactly sure how it works yet...
-                // Need to test.
-                return position;
+            function formatX(positionX) { // ???
+                return `${positionX}`;
+            }
+
+            function formatY(positionY) { // ???
+                return `${positionY}`;
+            }
+
+            function formatFontSize(fontSize) { // ???
+                return fontSize * 5;
+            }
+
+            function formatColor(color) { // ???
+                if (color[0] === '#') {
+                    return color.substring(1);
+                }
+
+                return color;
             }
         }
     }
@@ -171,7 +184,10 @@ Subtitle.parseLine = function (line) {
         for (let i = 0; i < attributes.length; i++) {
             const attribute = attributes[i];
             if (attribute.name.startsWith('data-')) {
-                const value = attribute.value === 'true' || attribute.value === 'false' ? JSON.parse(attribute.value) : attribute.value;
+                const value = attribute.name === 'bold' || attribute.name === 'italic' || attribute.name === 'underline'
+                    ? JSON.parse(attribute.value)
+                    : attribute.value;
+
                 dataset[attribute.name.substring(5)] = value;
             }
         }
@@ -180,7 +196,7 @@ Subtitle.parseLine = function (line) {
         return { text: innerText, dataset };
     } else {
         tempDiv.remove();
-        return { text: htmlString, dataset: {} }; // No outer element, return the inner text
+        return { text: line, dataset: {} }; // No outer element, return the inner text
     }
 }
 
@@ -188,8 +204,6 @@ Subtitle.makeSubtitlesFile = function (props) {
     const { subtitles, videoInfo, globalStyles } = props;
     const { height, width } = videoInfo;
     const { font, fontSize, fontColor, bold, italic, underline, } = globalStyles;
-
-    console.log(globalStyles);
 
     const now = new Date();
     const month = now.getMonth() + 1;
@@ -241,6 +255,6 @@ Subtitle.makeSubtitlesFile = function (props) {
         '[Events]',
         'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
         '',
-        subtitles.map(subtitle => subtitle.createDialogueLine(globalStyles)).join('')
+        subtitles.map(subtitle => subtitle.createDialogueLine(globalStyles)).join('\n')
     ].join('\n');
 }

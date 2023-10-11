@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 
+export const INPUT_LINE_CLASS = 'INPUT_LINE_CLASS';
+
 export default function InputLine(props) {
     const { value, onChange, index, line, cursorPosition } = props;
     const { index: cursorIndex, line: cursorLine, position } = cursorPosition;
@@ -19,6 +21,7 @@ export default function InputLine(props) {
             value={value}
             ref={inputRef}
             onChange={e => onChange(e)}
+            className={INPUT_LINE_CLASS}
             data-index={index} data-line={line} data-cursorposition={position}>
         </input>
     )

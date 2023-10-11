@@ -4,16 +4,20 @@ import useDragger from '../hooks/useDragger';
 import { isEmpty } from '../utils/utils';
 import Subtitle from '../models/Subtitle';
 
-export const SUBTITLE_OVERLAY = 'SUBTITLE_OVERLAY';
-export const SUBTITLE_OVERLAY_LINE = 'SUBTITLE_OVERLAY_LINE';
+export const OVERLAY_ENCLOSURE_ID = 'OVERLAY_ENCLOSURE_ID';
+export const VIDEO_PLAYER_ID = 'VIDEO_PLAYER_ID';
+export const SUBTITLE_OVERLAY_ID = 'SUBTITLE_OVERLAY_ID';
 export const ACTIVE_OVERLAY_LINE_ID = 'ACTIVE_OVERLAY_LINE_ID';
+export const SUBTITLE_OVERLAY_LINE_CLASS = 'SUBTITLE_OVERLAY_LINE_CLASS';
+
 const VIDEO_BUTTON_OPTIONS = { PLAY: 'PLAY', PAUSE: 'PAUSE' };
 const VIDEO_UPDATE_RATE_MS = 100;
 
 export default function VideoPlayer(props) {
     const { subtitles, setSubtitles, videoTimeSec, setVideoTimeSec, selectionScope, selectedSubtitle, handleSubtitleClick } = props;
 
-    const { videoFile } = useVideoUpload();
+    const { videoFile, videoInfo } = useVideoUpload();
+    const { name: videoName, durSec: videoDurSec } = videoInfo;
 
     const [videoSrc, setVideoSrc] = useState('');
     const [videoButton, setVideoButton] = useState(VIDEO_BUTTON_OPTIONS.PLAY);
@@ -22,9 +26,12 @@ export default function VideoPlayer(props) {
 
     const videoRef = useRef();
     const subtitleOverlayRef = useRef();
-    const inputClicked = useRef(null);
+    const progressBarRef = useRef();
 
-    useDragger(selectionScope <= 1 ? SUBTITLE_OVERLAY : null, draggerCallback);
+    const inputClicked = useRef(null);
+    const videoPlaying = useRef(false);
+
+    useDragger(selectionScope <= 1 ? SUBTITLE_OVERLAY_ID : null, draggerCallback);
 
     function draggerCallback(coords) {
         const { lastX, lastY } = coords;
@@ -40,8 +47,9 @@ export default function VideoPlayer(props) {
         }
     }
 
-    function handleVideoButtonClick() {
+    function handlePlayPauseButtonClick() {
         if (videoButton === VIDEO_BUTTON_OPTIONS.PLAY) {
+            videoPlaying.current = true;
             videoRef.current.play();
 
             const interval = setInterval(() => {
@@ -51,6 +59,7 @@ export default function VideoPlayer(props) {
 
             setVideoButton(VIDEO_BUTTON_OPTIONS.PAUSE);
         } else {
+            videoPlaying.current = false;
             videoRef.current.pause();
 
             clearInterval(videoInterval);
@@ -59,6 +68,12 @@ export default function VideoPlayer(props) {
             setVideoButton(VIDEO_BUTTON_OPTIONS.PLAY);
         }
     }
+
+    useEffect(() => {
+        if (!videoPlaying.current) {
+            videoRef.current.currentTime = videoTimeSec; // changes video.currentTime when videoTimeSec changes
+        }
+    }, [videoTimeSec]);
 
     useEffect(() => {
         if (videoFile) {
@@ -116,7 +131,7 @@ export default function VideoPlayer(props) {
             if (e.target === inputClicked.current) {
                 inputClicked.current.dataset.selectionscope = '2';
                 inputClicked.current.id = ACTIVE_OVERLAY_LINE_ID;
-            } else if (!inputClicked.current && e.target.classList.contains(SUBTITLE_OVERLAY_LINE)) {
+            } else if (!inputClicked.current && e.target.classList.contains(SUBTITLE_OVERLAY_LINE_CLASS)) {
                 inputClicked.current = e.target;
             } else {
                 if (inputClicked.current) {
@@ -149,55 +164,95 @@ export default function VideoPlayer(props) {
         ].slice(0, borderW);
     }
 
+    function handleProgressBarClick(e) {
+        const { offsetLeft, offsetWidth } = progressBarRef.current;
+        const ratio = (e.clientX - offsetLeft) / offsetWidth;
+        const newVideoTimeSec = ratio * videoDurSec;
+
+        videoRef.current.currentTime = newVideoTimeSec;
+        setVideoTimeSec(videoRef.current.currentTime);
+    }
+
+    function modifyVideoCurrentTime(modSec) {
+        let newVideoTimeSec = videoRef.current.currentTime + modSec;
+        if (newVideoTimeSec < 0) newVideoTimeSec = 0;
+        if (newVideoTimeSec > videoDurSec) newVideoTimeSec = videoDurSec;
+
+        videoRef.current.currentTime = newVideoTimeSec;
+        setVideoTimeSec(videoRef.current.currentTime);
+    }
+
     return (
         <div>
             <div>
                 <div>
                     <div className='position-relative bg-primary overflow-hidden' style={{ height: '400px', width: '400px' }}>
-                        <div id='SUBTITLE_OVERLAY' ref={subtitleOverlayRef} className='position-absolute border border-black' style={{ cursor: 'pointer', zIndex: '10' }}>
-                            {subtitleOverlay?.lines?.map((line, _index) => {
-                                const { text, dataset } = Subtitle.parseLine(line);
+                        <div id={OVERLAY_ENCLOSURE_ID} className='d-flex justify-content-center align-items-center h-100 w-100'>
+                            <div id={SUBTITLE_OVERLAY_ID} ref={subtitleOverlayRef} className='position-absolute border border-black' style={{ cursor: 'pointer', zIndex: '10' }}>
+                                {subtitleOverlay?.lines?.map((line, _index) => {
+                                    const { text, dataset } = Subtitle.parseLine(line);
 
-                                const font = dataset.font ?? subtitleOverlay.font ?? undefined;
-                                const fontSize = dataset.fontSize ?? subtitleOverlay.fontSize ?? undefined;
-                                const fontColor = dataset.fontColor ?? subtitleOverlay.fontColor ?? undefined;
-                                const borderW = dataset.borderW ?? subtitleOverlay.borderW ?? undefined;
-                                const borderColor = dataset.borderColor ?? subtitleOverlay.borderColor ?? undefined;
-                                const bold = dataset.bold ?? subtitleOverlay.bold ?? undefined;
-                                const italic = dataset.italic ?? subtitleOverlay.italic ?? undefined;
-                                const underline = dataset.underline ?? subtitleOverlay.underline ?? undefined;
-                                const align = subtitleOverlay.align ?? undefined;
+                                    const font = dataset.font ?? subtitleOverlay.font ?? undefined;
+                                    const fontSize = dataset.fontSize ?? subtitleOverlay.fontSize ?? undefined;
+                                    const fontColor = dataset.fontColor ?? subtitleOverlay.fontColor ?? undefined;
+                                    const borderW = dataset.borderW ?? subtitleOverlay.borderW ?? undefined;
+                                    const borderColor = dataset.borderColor ?? subtitleOverlay.borderColor ?? undefined;
+                                    const bold = dataset.bold ?? subtitleOverlay.bold ?? undefined;
+                                    const italic = dataset.italic ?? subtitleOverlay.italic ?? undefined;
+                                    const underline = dataset.underline ?? subtitleOverlay.underline ?? undefined;
+                                    const align = subtitleOverlay.align ?? undefined;
 
-                                return (
-                                    <input key={_index}
-                                        readOnly={selectionScope < 2 ? true : false}
-                                        value={text}
-                                        onChange={e => updateLine(e)}
-                                        className={SUBTITLE_OVERLAY_LINE + ' w-100'}
-                                        style={{
-                                            display: 'block',
-                                            cursor: 'pointer',
-                                            fontFamily: font,
-                                            fontSize: fontSize,
-                                            color: fontColor,
-                                            textShadow: textShadowStyle(borderW, borderColor),
-                                            fontWeight: bold,
-                                            fontStyle: italic,
-                                            textDecoration: underline,
-                                            textAlign: align
-                                        }}
-                                        data-selectionscope='1' data-index={subtitleOverlay.index} data-line={_index + 1}>
-                                    </input>
-                                )
-                            })}
+                                    return (
+                                        <input key={_index}
+                                            readOnly={selectionScope < 2 ? true : false}
+                                            value={text}
+                                            onChange={e => updateLine(e)}
+                                            className={SUBTITLE_OVERLAY_LINE_CLASS + ' w-100'}
+                                            style={{
+                                                display: 'block',
+                                                cursor: 'pointer',
+                                                fontFamily: font,
+                                                fontSize: `${fontSize}px`,
+                                                color: fontColor,
+                                                textShadow: textShadowStyle(borderW, borderColor),
+                                                fontWeight: bold,
+                                                fontStyle: italic,
+                                                textDecoration: underline,
+                                                textAlign: align
+                                            }}
+                                            data-selectionscope='1' data-index={subtitleOverlay.index} data-line={_index + 1}>
+                                        </input>
+                                    )
+                                })}
+                            </div>
+                            <video id={VIDEO_PLAYER_ID}
+                                onPause={e => setVideoButton(VIDEO_BUTTON_OPTIONS.PLAY)}
+                                src={videoSrc} ref={videoRef}
+                                style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                                data-playing={videoButton === VIDEO_BUTTON_OPTIONS.PLAY ? 'false' : 'true'}>
+                            </video>
                         </div>
-                        <video src={videoSrc} ref={videoRef} className='h-100 w-100'></video>
                     </div>
                 </div>
                 <div>
-                    <button data-selectionscope={selectionScope}
-                        onClick={e => handleVideoButtonClick()}>{videoButton === VIDEO_BUTTON_OPTIONS.PLAY ? 'Play' : videoButton === VIDEO_BUTTON_OPTIONS.PAUSE ? 'Pause' : ''}
-                    </button>
+                    <div className='d-flex justify-content-center align-items-center' style={{ height: '30px', width: '100%' }}>
+                        <div ref={progressBarRef} onClick={e => handleProgressBarClick(e)}
+                            style={{ height: '50%', width: '90%', cursor: 'pointer', backgroundColor: 'red' }}>
+                            <div style={{ height: '100%', width: `${(videoTimeSec / videoDurSec * 100)}%`, cursor: 'pointer', pointerEvents: 'none', backgroundColor: 'blue' }}></div >
+                        </div>
+                    </div>
+                    <div className='d-flex justify-content-center align-items-center gap-2'>
+                    <button onClick={e => modifyVideoCurrentTime(-videoDurSec)}>Start</button>
+                    <button onClick={e => modifyVideoCurrentTime(-10)}>-10s</button>
+                        <div className='d-flex justify-content-center align-items-center'>
+                            <button data-selectionscope={selectionScope}
+                                onClick={e => handlePlayPauseButtonClick()}>
+                                {videoButton === VIDEO_BUTTON_OPTIONS.PLAY ? 'Play' : videoButton === VIDEO_BUTTON_OPTIONS.PAUSE ? 'Pause' : ''}
+                            </button>
+                        </div>
+                        <button onClick={e => modifyVideoCurrentTime(10)}>+10s</button>
+                        <button onClick={e => modifyVideoCurrentTime(videoDurSec)}>End</button>
+                    </div>
                 </div>
             </div>
         </div>

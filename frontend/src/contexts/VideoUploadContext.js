@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import VideoInfo from '../models/VideoInfo';
 
 const VideoUploadContext = React.createContext();
@@ -18,19 +18,20 @@ export function VideoUploadProvider({ children }) {
         }
     }
 
-    function handleVideoLoaded(e) {
-        const videoElement = e.target;
-        console.log(videoElement);
-        setVideoInfo(new VideoInfo({ videoFile, videoElement }));
-    }
+    useEffect(() => {
+        if (videoFile) {
+            const _videoInfo = new VideoInfo({ videoFile });
+            _videoInfo.init()
+                .then(() => setVideoInfo(_videoInfo));
+        }
+    }, [videoFile]);
 
     const value = {
         videoFile,
         setVideoFile,
         handleFileUpload,
         videoInfo,
-        setVideoInfo,
-        handleVideoLoaded
+        setVideoInfo
     };
 
     return (

@@ -1,10 +1,10 @@
-const User = require('../../models/User');
+import User from '../../models/User.js';
 
-const express = require('express');
-const router = express.Router();
+import express from 'express';
+export const router = express.Router();
 
-const auth = require('../../middleware/auth/auth');
-const useBody = require('../../middleware/format/useBody');
+import auth from '../../middleware/auth/auth.js';
+import useBody from '../../middleware/format/useBody.js';
 
 
 
@@ -93,7 +93,3 @@ router.patch('/change', auth, (req, res, next) => useBody(req, res, next, ['pass
 
     res.status(201).json({ success: true });
 });
-
-
-
-module.exports = router;

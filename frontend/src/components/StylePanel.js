@@ -1,7 +1,21 @@
 import React, { useRef, useEffect } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import editorOptions from '../config/editorOptions.json';
+import defaultEditorSettings from '../config/defaultEditorSettings.json';
 import ffmpegFonts from '../config/ffmpegFonts.json';
+
+export const DEFAULT_STYLE_PANEL = {
+    font: { name: 'Font', value: defaultEditorSettings.font },
+    fontSize: { name: 'Font Size', value: defaultEditorSettings.fontSize },
+    fontColor: { name: 'Font Color', value: defaultEditorSettings.fontColor },
+    borderW: { name: 'Border Width', value: defaultEditorSettings.borderW },
+    borderColor: { name: 'Border Color', value: defaultEditorSettings.borderColor },
+    backgroundColor: { name: 'Background Color', value: defaultEditorSettings.backgroundColor },
+    bold: { name: 'Bold', value: defaultEditorSettings.bold },
+    italic: { name: 'Italic', value: defaultEditorSettings.italic },
+    underline: { name: 'Underline', value: defaultEditorSettings.underline },
+    align: { name: 'Align', value: defaultEditorSettings.align }
+};
 
 export default function StylePanel(props) {
     const { stylePanel, handleStylePanelChange } = props;

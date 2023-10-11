@@ -16,26 +16,14 @@ import Timeline from '../components/Timeline';
 import Transcript from '../components/Transcript';
 import VideoPlayer from '../components/VideoPlayer';
 import { isEmpty } from '../utils/utils';
-import { SUBTITLE_OVERLAY_LINE } from '../components/VideoPlayer';
+import { SUBTITLE_OVERLAY_LINE_CLASS } from '../components/VideoPlayer';
 import { ACTIVE_OVERLAY_LINE_ID } from '../components/VideoPlayer';
 import StylePanel from '../components/StylePanel';
 import ExportPanel from '../components/ExportPanel';
-
+import { INPUT_LINE_CLASS } from '../components/InputLine';
+import { DEFAULT_STYLE_PANEL } from '../components/StylePanel';
 
 const MAX_NUM_LINES = 4;
-const INPUT_LINE_CLASS = 'INPUT_LINE_CLASS';
-const DEFAULT_STYLE_PANEL = {
-    font: { name: 'Font', value: defaultEditorSettings.font },
-    fontSize: { name: 'Font Size', value: defaultEditorSettings.fontSize },
-    fontColor: { name: 'Font Color', value: defaultEditorSettings.fontColor },
-    borderW: { name: 'Border Width', value: defaultEditorSettings.borderW },
-    borderColor: { name: 'Border Color', value: defaultEditorSettings.borderColor },
-    backgroundColor: { name: 'Background Color', value: defaultEditorSettings.backgroundColor },
-    bold: { name: 'Bold', value: defaultEditorSettings.bold },
-    italic: { name: 'Italic', value: defaultEditorSettings.italic },
-    underline: { name: 'Underline', value: defaultEditorSettings.underline },
-    align: { name: 'Align', value: defaultEditorSettings.align }
-};
 
 export default function Editor(props) {
     const { numLinesOptions, numWordsPerLineOptions } = props;
@@ -339,7 +327,7 @@ export default function Editor(props) {
     //     function handleSelectionChange() {
     //         const selection = window.getSelection();
 
-    //         if (selection && selection.toString().trim() !== '' && selectionScope >= 2 && document.activeElement.classList.contains(SUBTITLE_OVERLAY_LINE)) {
+    //         if (selection && selection.toString().trim() !== '' && selectionScope >= 2 && document.activeElement.classList.contains(SUBTITLE_OVERLAY_LINE_CLASS)) {
     //             selectionRef.current = selection.toString();
     //             setSelectionScope(3);
     //         } else {
@@ -349,6 +337,8 @@ export default function Editor(props) {
     // }, []);
 
     function handleStylePanelChange(style, value) {
+        console.log(style, value);
+        
         const newSubtitles = [...subtitles];
         if (newSubtitles[selectedSubtitle]?.lines) newSubtitles[selectedSubtitle].lines = [...newSubtitles[selectedSubtitle].lines];
 
@@ -488,6 +478,7 @@ export default function Editor(props) {
                     handleSubtitleClick={handleSubtitleClick} />
             </div>
             <Timeline subtitles={subtitles}
+                setSubtitles={setSubtitles}
                 videoTimeSec={videoTimeSec}
                 setVideoTimeSec={setVideoTimeSec}
                 selectedSubtitle={selectedSubtitle}

@@ -1,5 +1,6 @@
 {
   "name": "subtitles-app-mern",
+  "type": "module",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -14,6 +15,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ffmpeg/core": "^0.12.3",
+    "@ffmpeg/ffmpeg": "^0.12.6",
+    "@ffmpeg/util": "^0.12.1",
     "@picovoice/leopard-node": "^1.2.0",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",

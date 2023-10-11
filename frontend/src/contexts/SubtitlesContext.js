@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useVideoUpload } from './VideoUploadContext';
-import defaultEditorSettings from '../config/defaultEditorSettings.json';
+import defaultEditorSettings from '../config/defaultEditorSettings.json' ;
 
 const SubtitlesContext = React.createContext();
 
@@ -26,7 +26,7 @@ export function SubtitlesProvider({ children }) {
         formData.append('videoFile', videoFile);
 
         return await new Promise((resolve, reject) => {
-            fetch('/transcribe', {
+            fetch('/subtitles/transcribe', {
                 method: 'POST',
                 body: formData
             }).then(async (res) => {

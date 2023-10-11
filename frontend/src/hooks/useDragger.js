@@ -67,7 +67,6 @@ function useDragger(id, callback) {
             target.style.top = `${nextY}px`;
         }
     }, [id]);
-
 }
 
 export default useDragger;

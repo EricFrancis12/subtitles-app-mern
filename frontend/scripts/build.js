@@ -12,13 +12,13 @@ const ffmpegFonts = require('../src/config/ffmpegFonts.json');
         fontCssFileData += [
             `@font-face {`,
             `\tfont-family: '${font.family}';`,
-            `\tsrc: url('./fonts/${font.fileName}') format('${font.format}');`,
+            `\tsrc: url('../fonts/${font.fileName}') format('${font.format}');`,
             `}`,
             ``,
             ``
         ].join('\n');
     });
 
-    const fontCssFileName = 'ffmpegFonts.css';
-    fs.writeFileSync(path.resolve(__dirname, `../src/${fontCssFileName}`), fontCssFileData, { encoding: 'utf8' });
+    const fontCssFilePath = '../src/assets/css/ffmpegFonts.css';
+    fs.writeFileSync(path.resolve(__dirname, fontCssFilePath), fontCssFileData, { encoding: 'utf8' });
 })();

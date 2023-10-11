@@ -1,6 +1,6 @@
-const User = require('../../models/User');
+import User from '../../models/User.js';
 
-const { isEmpty } = require('../../utils/utils');
+import { isEmpty } from '../../utils/utils.js';
 
 
 
@@ -42,4 +42,4 @@ async function auth(req, res, next) {
 
 
 
-module.exports = auth;
+export default auth;

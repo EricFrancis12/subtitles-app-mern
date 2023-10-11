@@ -1,6 +1,8 @@
-const path = require('path');
+import path from 'path';
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
-const multer = require('multer');
+import multer from 'multer';
 
 
 
@@ -28,7 +30,7 @@ const fileStorageEngine = multer.diskStorage({
 
 const oneHundredMB = 1024 * 1024 * 100;
 
-const upload = multer({
+export const upload = multer({
     storage: fileStorageEngine,
     limits: {
         fileSize: oneHundredMB
@@ -46,7 +48,7 @@ const upload = multer({
     },
 });
 
-const handleMulterErrors = (err, req, res, next) => {
+export const handleMulterErrors = (err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
             return res.status(400).json({ success: false, message: 'File size exceeds the limit' });
@@ -58,11 +60,4 @@ const handleMulterErrors = (err, req, res, next) => {
     }
 
     next(err);
-};
-
-
-
-module.exports = {
-    upload,
-    handleMulterErrors
 };

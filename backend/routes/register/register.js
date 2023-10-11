@@ -1,9 +1,9 @@
-const User = require('../../models/User');
+import User from '../../models/User.js';
 
-const express = require('express');
-const router = express.Router();
+import express from 'express';
+export const router = express.Router();
 
-const useBody = require('../../middleware/format/useBody');
+import useBody from '../../middleware/format/useBody.js';
 
 
 
@@ -71,7 +71,3 @@ router.post('/resend', (req, res, next) => useBody(req, res, next, ['email']), a
 
     res.status(201).json({ success: true });
 });
-
-
-
-module.exports = router;

@@ -53,4 +53,4 @@ function useBody(req, res, next, requiredKeys = []) {
 
 
 
-module.exports = useBody;
+export default useBody;

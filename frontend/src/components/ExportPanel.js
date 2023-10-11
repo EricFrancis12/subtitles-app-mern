@@ -11,21 +11,26 @@ const ALLOWED_FILE_EXTS = ['mp4', 'mov', 'mkv', 'flv', 'avi', 'webm', 'wmv'];
 export default function ExportPanel(props) {
     const { subtitles, globalStylePanel, selectionScope } = props;
 
-    const [loaded, setLoaded] = useState(false);
     const [exporting, setExporting] = useState(false);
     const [exportResults, setExportResults] = useState([]);
 
     const ffmpegRef = useRef(new FFmpeg());
-    const fileExtRef = useRef();
+    const fileExtRef = useRef('');
+
+    const loading = useRef(false);
+    const loaded = useRef(false);
 
     const { videoFile, videoInfo } = useVideoUpload();
 
     useEffect(() => {
-        load();
+        if (!loaded.current && !loading.current) {
+            load();
+        }
     }, [videoFile]);
 
     async function load() {
-        setLoaded(false);
+        loading.current = true;
+        loaded.current = false;
 
         const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.2/dist/umd';
         const ffmpeg = ffmpegRef.current;
@@ -47,18 +52,19 @@ export default function ExportPanel(props) {
 
             // write fonts to virtual file system:
             for (let i = 0; i < ffmpegFonts.length; i++) {
-                const fontFileData = await fetchFile(`../fonts/${ffmpegFonts[i].fileName}`);
+                const fontFileData = await fetchFile(`/assets/fonts/${ffmpegFonts[i].fileName}`);
                 await ffmpeg.writeFile(`fonts/${ffmpegFonts[i].fileName}`, fontFileData);
             }
 
-            setLoaded(true);
+            loading.current = false;
+            loaded.current = true;
         } catch (err) {
             console.error(err);
         }
     }
 
     async function handleExportClick() {
-        if (!loaded) return;
+        if (!loaded.current) return;
         setExporting(true);
 
         const timestamp = Date.now();
@@ -71,14 +77,11 @@ export default function ExportPanel(props) {
         try {
             // impliment ffmpeg.wasm:
             const ffmpeg = ffmpegRef.current;
-            const subtitlesFile = Subtitle.makeSubtitlesFile({ subtitles, videoInfo, globalStyles: globalStylePanel });
+            const subtitlesFileData = Subtitle.makeSubtitlesFile({ subtitles, videoInfo, globalStyles: globalStylePanel });
 
-            await ffmpeg.writeFile(outputSubtitlesFilePath, subtitlesFile);
+            await ffmpeg.writeFile(outputSubtitlesFilePath, subtitlesFileData);
             await ffmpeg.writeFile('input.mp4', await fetchFile(videoURL));
             await ffmpeg.exec(['-i', `input.mp4`, '-vf', `subtitles=${outputSubtitlesFilePath}:fontsdir=/fonts`, outputVideoFilePath]);
-
-            // try this way:
-            // await ffmpeg.exec(['-i', 'input.mp4', '-vf', `subtitles=${outputSubtitlesFilePath}:fontsdir=/fonts`, outputVideoFilePath]);
 
             exportResult = {
                 videoFilePath: outputVideoFilePath,

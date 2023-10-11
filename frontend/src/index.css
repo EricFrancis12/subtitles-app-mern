@@ -7,3 +7,21 @@
 .selected-subtitle {
     background-color: blue;
 }
+
+#left-timeline-expander,
+#right-timeline-expander {
+    position: absolute;
+    height: 100%;
+    width: 3px;
+    background-color: red;
+    cursor: ew-resize;
+    z-index: 10;
+}
+
+#left-timeline-expander {
+    left: 0;
+}
+
+#right-timeline-expander {
+    right: 0;
+}

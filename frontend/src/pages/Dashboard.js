@@ -14,7 +14,7 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(false);
     const [videoSrc, setVideoSrc] = useState('');
 
-    const { videoFile, setVideoFile, handleFileUpload, videoInfo, setVideoInfo, handleVideoLoaded } = useVideoUpload();
+    const { videoFile, setVideoFile, handleFileUpload, videoInfo, setVideoInfo } = useVideoUpload();
     const { subtitlesData, setSubtitlesData, numLines, setNumLines, numWordsPerLine, setNumWordsPerLine, transcribeVideo } = useSubtitles();
     const { resetStacks } = useHistory();
 
@@ -82,7 +82,7 @@ export default function Dashboard() {
                         ? <Card.Body>
                             <div className='d-flex flex-column gap-4 justify-items-between align-items-center'>
                                 <div>
-                                    <video onLoadedMetadata={e => handleVideoLoaded(e)} src={videoSrc} style={{ maxHeight: '400px', maxWidth: '400px' }}></video>
+                                    <video src={videoSrc} style={{ maxHeight: '400px', maxWidth: '400px' }}></video>
                                 </div>
                                 <div>
                                     <h4>Video Info:</h4>
@@ -110,9 +110,7 @@ export default function Dashboard() {
                                             </>}
                                         {loading
                                             ? <Spinner />
-                                            : subtitlesData
-                                                ? <Link to='/app/editor'>Go to Editor</Link>
-                                                : <Button disabled={loading || subtitlesData} className='w-100 mt-4' type='submit'>Transcribe Video</Button>}
+                                            : <Button disabled={loading || subtitlesData} className='w-100 mt-4' type='submit'>Transcribe Video</Button>}
                                     </Form>
                                 </div>
                                 <Button onClick={e => handleReset()} className='btn btn-brimary'>Reset</Button>

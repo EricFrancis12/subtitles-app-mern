@@ -1,7 +1,7 @@
-const User = require('../../models/User');
+import User from '../../models/User.js';
 
-const express = require('express');
-const router = express.Router();
+import express from 'express';
+export const router = express.Router();
 
 
 
@@ -30,7 +30,3 @@ async function logout(req, res) {
         console.error(err);
     }
 }
-
-
-
-module.exports = router;

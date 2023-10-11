@@ -1,9 +1,9 @@
-const UserClient = require('../../models/UserClient');
+import UserClient from '../../models/UserClient.js';
 
-const express = require('express');
-const router = express.Router();
+import express from 'express';
+export const router = express.Router();
 
-const auth = require('../../middleware/auth/auth');
+import auth from '../../middleware/auth/auth.js';
 
 
 
@@ -12,7 +12,3 @@ router.get('/', auth, (req, res) => {
     const userClient = new UserClient(user);
     res.status(200).json({ userClient });
 });
-
-
-
-module.exports = router;
