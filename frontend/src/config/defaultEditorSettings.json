@@ -1,7 +1,7 @@
 {
     "numLines": 1,
     "numWordsPerLine": 1,
-    "font": "Georgia",
+    "font": "ffmpegFonts-Georgia",
     "fontSize": 14,
     "fontColor": "#70e26a",
     "borderW": 3,

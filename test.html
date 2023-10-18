@@ -4,30 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test</title>
+    <title>Document</title>
 </head>
 
 <body>
-    <select>
-        <option value="0">0</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
-    </select>
-    <input id="input" type="text" value="wkebriwbner">
-
+    <div class="div"></div>
+    
     <script>
-        const input = document.querySelector('#input');
-        input.addEventListener('input', (e) => {
-            console.log(e);
-        });
+        const div = document.querySelector('.div');
 
-        const select = document.querySelector('select');
-        select.addEventListener('input', (e) => {
-            console.log(e);
-            input.focus();
-            input.selectionStart = null;
-            input.selectionEnd = null;
-        });
+        console.log(div.dataset);
+        console.log(div.dataset.test);
     </script>
 </body>
 

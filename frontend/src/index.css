@@ -25,3 +25,11 @@
 #right-timeline-expander {
     right: 0;
 }
+
+.SUBTITLE_OVERLAY_LINE_CLASS {
+    background-color: transparent;
+}
+
+.SUBTITLE_OVERLAY_LINE_CLASS#ACTIVE_OVERLAY_LINE_ID {
+    background-color: yellow;
+}

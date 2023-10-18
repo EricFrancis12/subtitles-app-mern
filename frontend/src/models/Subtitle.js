@@ -184,11 +184,10 @@ Subtitle.parseLine = function (line) {
         for (let i = 0; i < attributes.length; i++) {
             const attribute = attributes[i];
             if (attribute.name.startsWith('data-')) {
-                const value = attribute.name === 'bold' || attribute.name === 'italic' || attribute.name === 'underline'
-                    ? JSON.parse(attribute.value)
-                    : attribute.value;
+                const { value, name: style } = attribute;
+                const parsedValue = Subtitle.parseValue(style, value);
 
-                dataset[attribute.name.substring(5)] = value;
+                if (parsedValue) dataset[attribute.name.substring(5)] = parsedValue;
             }
         }
 
@@ -198,6 +197,20 @@ Subtitle.parseLine = function (line) {
         tempDiv.remove();
         return { text: line, dataset: {} }; // No outer element, return the inner text
     }
+}
+
+Subtitle.parseValue = function (style, value) {
+    let result = null;
+    switch (style) {
+        case 'bold': result = JSON.parse(value); break;
+        case 'italic': result = JSON.parse(value); break;
+        case 'underline': result = JSON.parse(value); break;
+        case 'fontSize': result = parseInt(value); break;
+        case 'borderW': result = parseInt(value); break;
+        default: result = value;
+    }
+
+    return result;
 }
 
 Subtitle.makeSubtitlesFile = function (props) {

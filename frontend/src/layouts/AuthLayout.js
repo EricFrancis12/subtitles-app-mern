@@ -7,11 +7,6 @@ import AppNavbar from '../components/AppNavbar';
 export function AuthLayout({ children }) {
     const { loggedIn } = useAuth();
 
-    const navItems = [
-        { name: 'Profile', link: '/app/profile' },
-        { name: 'Settings', link: '/app/settings' }
-    ];
-
     return loggedIn
         ? <>
             <AppNavbar />

@@ -86,6 +86,8 @@ export default function VideoPlayer(props) {
         if (selectionScope > 0 && !isEmpty(selectedSubtitle)) {
             setVideoTimeSec(subtitles[selectedSubtitle].startSec);
         }
+
+        if (selectionScope <= 1) clearActiveLine();
     }, [selectedSubtitle, selectionScope]);
 
     useEffect(() => {
@@ -117,31 +119,29 @@ export default function VideoPlayer(props) {
         return null;
     }
 
-    useEffect(() => {
-        subtitleOverlayRef.current.addEventListener('click', handleClick);
+    function handleOverlayClick(e) {
+        if (!e.target.classList.contains(SUBTITLE_OVERLAY_LINE_CLASS)) return;
 
-        return () => {
-            if (subtitleOverlayRef.current) subtitleOverlayRef.current.removeEventListener('click', handleClick);
+        const index = parseInt(e.target?.dataset?.index);
+        const newSelectionScope = selectionScope + 1;
+
+        if (selectionScope < 2) {
+            handleSubtitleClick(index, newSelectionScope);
         }
 
-        function handleClick(e) {
-            const index = parseInt(e.target?.dataset?.index);
-            if (!isEmpty(index) && index !== NaN) handleSubtitleClick(index, 2);
+        clearActiveLine();
 
-            if (e.target === inputClicked.current) {
-                inputClicked.current.dataset.selectionscope = '2';
-                inputClicked.current.id = ACTIVE_OVERLAY_LINE_ID;
-            } else if (!inputClicked.current && e.target.classList.contains(SUBTITLE_OVERLAY_LINE_CLASS)) {
-                inputClicked.current = e.target;
-            } else {
-                if (inputClicked.current) {
-                    inputClicked.current.dataset.selectionscope = '1';
-                    inputClicked.current.id = '';
-                }
-                inputClicked.current = null;
-            }
+        if (subtitleOverlayRef.current.dataset.dragged === 'true') {
+            subtitleOverlayRef.current.dataset.dragged = 'false';
+        } else if (newSelectionScope >= 2) {
+            e.target.id = ACTIVE_OVERLAY_LINE_ID;
         }
-    }, []);
+    }
+
+    function clearActiveLine() {
+        const activeLine = document.getElementById(ACTIVE_OVERLAY_LINE_ID);
+        if (activeLine) activeLine.id = '';
+    }
 
     function updateLine(e) {
         const index = parseInt(e.target.dataset.index);
@@ -161,7 +161,7 @@ export default function VideoPlayer(props) {
             ', ' + borderColor + ' -1.5px 0px, ' + borderColor + ' 0px 1.5px, ' + borderColor + ' 1.5px 0px, ' + borderColor + ' 0px -1.5px',
             ', ' + borderColor + ' -2px 0px, ' + borderColor + ' 0px 2px, ' + borderColor + ' 2px 0px, ' + borderColor + ' 0px -2px',
             ', ' + borderColor + ' -2.5px 0px, ' + borderColor + ' 0px 2.5px, ' + borderColor + ' 2.5px 0px, ' + borderColor + ' 0px -2.5px'
-        ].slice(0, borderW);
+        ].slice(0, borderW + 1).join('');
     }
 
     function handleProgressBarClick(e) {
@@ -186,9 +186,12 @@ export default function VideoPlayer(props) {
         <div>
             <div>
                 <div>
-                    <div className='position-relative bg-primary overflow-hidden' style={{ height: '400px', width: '400px' }}>
-                        <div id={OVERLAY_ENCLOSURE_ID} className='d-flex justify-content-center align-items-center h-100 w-100'>
-                            <div id={SUBTITLE_OVERLAY_ID} ref={subtitleOverlayRef} className='position-absolute border border-black' style={{ cursor: 'pointer', zIndex: '10' }}>
+                    <div className='bg-primary overflow-hidden' style={{ height: '400px', width: '400px' }}>
+                        <div id={OVERLAY_ENCLOSURE_ID} className='position-relative d-flex justify-content-center align-items-center h-100 w-100' style={{ overflow: 'hidden' }}>
+                            <div id={SUBTITLE_OVERLAY_ID} ref={subtitleOverlayRef}
+                                onClick={e => handleOverlayClick(e)}
+                                className='position-absolute border border-black'
+                                style={{ cursor: 'pointer', zIndex: '10' }}>
                                 {subtitleOverlay?.lines?.map((line, _index) => {
                                     const { text, dataset } = Subtitle.parseLine(line);
 
@@ -204,23 +207,27 @@ export default function VideoPlayer(props) {
 
                                     return (
                                         <input key={_index}
-                                            readOnly={selectionScope < 2 ? true : false}
+                                            type='text'
+                                            readOnly={true}
                                             value={text}
                                             onChange={e => updateLine(e)}
                                             className={SUBTITLE_OVERLAY_LINE_CLASS + ' w-100'}
                                             style={{
                                                 display: 'block',
+                                                userSelect: 'none',
                                                 cursor: 'pointer',
+                                                border: 'none',
+                                                outline: selectionScope > 0 ? 'dashed black 1px' : 'none',
                                                 fontFamily: font,
                                                 fontSize: `${fontSize}px`,
                                                 color: fontColor,
                                                 textShadow: textShadowStyle(borderW, borderColor),
-                                                fontWeight: bold,
-                                                fontStyle: italic,
-                                                textDecoration: underline,
+                                                fontWeight: bold === true ? 'bold' : 'normal',
+                                                fontStyle: italic === true ? 'italic' : 'normal',
+                                                textDecoration: underline === true ? 'underline' : 'none',
                                                 textAlign: align
                                             }}
-                                            data-selectionscope='1' data-index={subtitleOverlay.index} data-line={_index + 1}>
+                                            data-selectionscope={selectionScope} data-index={subtitleOverlay.index} data-line={_index + 1}>
                                         </input>
                                     )
                                 })}
@@ -242,8 +249,8 @@ export default function VideoPlayer(props) {
                         </div>
                     </div>
                     <div className='d-flex justify-content-center align-items-center gap-2'>
-                    <button onClick={e => modifyVideoCurrentTime(-videoDurSec)}>Start</button>
-                    <button onClick={e => modifyVideoCurrentTime(-10)}>-10s</button>
+                        <button onClick={e => modifyVideoCurrentTime(-videoDurSec)}>Start</button>
+                        <button onClick={e => modifyVideoCurrentTime(-10)}>-10s</button>
                         <div className='d-flex justify-content-center align-items-center'>
                             <button data-selectionscope={selectionScope}
                                 onClick={e => handlePlayPauseButtonClick()}>

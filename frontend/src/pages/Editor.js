@@ -337,8 +337,8 @@ export default function Editor(props) {
     // }, []);
 
     function handleStylePanelChange(style, value) {
-        console.log(style, value);
-        
+        value = Subtitle.parseValue(style, value);
+
         const newSubtitles = [...subtitles];
         if (newSubtitles[selectedSubtitle]?.lines) newSubtitles[selectedSubtitle].lines = [...newSubtitles[selectedSubtitle].lines];
 
@@ -389,7 +389,7 @@ export default function Editor(props) {
         }
 
         function makeNewLineString(text, dataset) {
-            return `<span ${Object.keys(dataset).map(key => `data-${key}="${dataset[key]}"`).join(' ')}>${text}</span>`;
+            return `<span ${Object.keys(dataset).map(key => dataset[key] != undefined ? `data-${key}="${dataset[key]}"` : '').join(' ')}>${text}</span>`;
         }
     }
 

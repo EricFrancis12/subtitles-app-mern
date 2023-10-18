@@ -75,7 +75,7 @@ const UserSchema = new mongoose.Schema({
             default: defaultEditorSettings.font
         },
         fontSize: {
-            type: String,
+            type: Number,
             default: defaultEditorSettings.fontSize
         },
         fontColor: {

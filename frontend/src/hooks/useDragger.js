@@ -60,6 +60,10 @@ function useDragger(id, callback) {
         function handleMouseMove(e) {
             if (!isClicked.current) return;
 
+            if (target.dataset.dragged !== 'true') {
+                target.dataset.dragged = 'true';
+            }
+
             const nextX = e.clientX - coords.current.startX + coords.current.lastX;
             const nextY = e.clientY - coords.current.startY + coords.current.lastY;
 

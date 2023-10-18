@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import Cookies from 'js-cookie';
 
 const AuthContext = React.createContext();
@@ -7,30 +7,38 @@ export function useAuth() {
     return useContext(AuthContext);
 }
 
-let fetchingUserClient = false;
-
 export function AuthProvider({ children }) {
     const [loggedIn, setLoggedIn] = useState(Cookies.get('loggedIn') === 'true' ? true : false);
     const [userClient, setUserClient] = useState(null);
+
+    const fetchingUserClient = useRef(false);
 
     useEffect(() => {
         fetchUserClient();
     }, [loggedIn]);
 
     function fetchUserClient() {
-        if (loggedIn && !userClient && !fetchingUserClient) {
-            console.log('fetchingUserClient');
-            fetchingUserClient = true;
+        if (loggedIn && !userClient && !fetchingUserClient.current) {
+            fetchingUserClient.current = true;
             fetch('/user')
                 .then(async (res) => {
+                    if (res.status === 401) {
+                        setUserClient(null);
+                        setLoggedIn(false);
+                        return;
+                    }
+
                     const resJson = await res.json();
+                    
                     if (resJson.userClient) {
                         setUserClient(resJson.userClient);
+
+                        console.log(resJson.userClient);
                     }
                 }).catch(err => {
                     console.error(err);
                 }).finally(() => {
-                    fetchingUserClient = false;
+                    fetchingUserClient.current = false;
                 });
         }
     }
