@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Form } from 'react-bootstrap';
+import { Button, Form, Tabs, Tab, Accordion } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { useVideoUpload } from '../contexts/VideoUploadContext';
 import { useSubtitles } from '../contexts/SubtitlesContext';
@@ -425,38 +425,56 @@ export default function Editor(props) {
                     </Form.Group>
                 </div>
             </div>
-            <div className='d-flex justify-items-between align-items-start'>
-                <div className='overflow-scroll' style={{ maxHeight: '60vh' }}>
-                    {subtitles.map((subtitle, index) => {
-                        return (
-                            <div onClick={e => handleSubtitleClick(index, 1)}
-                                ref={selectedSubtitle === index ? selectedSubtitleRef : null}
-                                data-selectionscope='1' data-numlines={subtitle.lines.length}
-                                key={index} className={(selectedSubtitle === index && 'selected-subtitle') + ' border border-black rounded m-2 p-2'}>
-                                <div>
-                                    {subtitle.lines.map((line, _index) => {
-                                        return (
-                                            <InputLine value={Subtitle.parseLine(line).text}
-                                                key={_index}
-                                                onChange={e => updateLine(e)}
-                                                index={index} line={_index + 1}
-                                                cursorPosition={cursorPosition}
-                                            />
-                                        )
-                                    })}
-                                </div>
-                                <div>
-                                    <p>Start: {subtitle.startSec?.toFixed(2)}</p>
-                                    <p>End: {subtitle?.endSec?.toFixed(2)}</p>
-                                    <p>Confidence: {(subtitle.confidence * 100).toFixed(2) || '--:--'}%</p>
-                                </div>
+            <div className='d-flex justify-items-between align-items-start flex-wrap'>
+                <div data-selectionscope='1'>
+                    <Tabs defaultActiveKey="subtitles">
+                        <Tab eventKey="subtitles" title="Subtitles">
+                            <div className='overflow-scroll' style={{ maxHeight: '60vh' }}>
+                                {subtitles.map((subtitle, index) => {
+                                    const selected = selectedSubtitle === index;
+
+                                    return (
+                                        <div onClick={e => handleSubtitleClick(index, 1)}
+                                            ref={selected ? selectedSubtitleRef : null}
+                                            key={index}
+                                            style={{
+                                                minHeight: selected ? '150px' : '0px',
+                                                backgroundColor: selected ? '' : 'white',
+                                                transition: 'min-height 0.5s ease-in-out, background-color 0.3s ease-in-out'
+                                            }}
+                                            className={(selected && 'selected-subtitle') + ' border border-black rounded m-2 p-2'}
+                                            data-selectionscope='1' data-numlines={subtitle.lines.length}>
+                                            <div>
+                                                {subtitle.lines.map((line, _index) => {
+                                                    return (
+                                                        <InputLine value={Subtitle.parseLine(line).text}
+                                                            key={_index}
+                                                            onChange={e => updateLine(e)}
+                                                            index={index} line={_index + 1} selected={selected}
+                                                            cursorPosition={cursorPosition}
+                                                        />
+                                                    )
+                                                })}
+                                            </div>
+                                            {selected
+                                                ? <div>
+                                                    <p>Start: {subtitle.startSec?.toFixed(2)}</p>
+                                                    <p>End: {subtitle?.endSec?.toFixed(2)}</p>
+                                                    <p>Confidence: {(subtitle.confidence * 100).toFixed(2) || '--:--'}%</p>
+                                                </div>
+                                                : ''}
+                                        </div>
+                                    )
+                                })}
                             </div>
-                        )
-                    })}
+                        </Tab>
+                        <Tab eventKey="transcript" title="Transcript">
+                            <Transcript subtitles={subtitles}
+                                selectedSubtitle={selectedSubtitle}
+                                handleSubtitleClick={handleSubtitleClick} />
+                        </Tab>
+                    </Tabs>
                 </div>
-                <Transcript subtitles={subtitles}
-                    selectedSubtitle={selectedSubtitle}
-                    handleSubtitleClick={handleSubtitleClick} />
                 <div data-selectionscope={selectionScope}>
                     <StylePanel stylePanel={stylePanel} handleStylePanelChange={handleStylePanelChange} />
                     {/* {Object.keys(styleButtons).map((style, index) => {

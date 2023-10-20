@@ -1,4 +1,4 @@
-import { isEmpty } from "../utils/utils";
+
 
 export default class VideoInfo {
     constructor(props) {
@@ -27,8 +27,15 @@ export default class VideoInfo {
         });
 
         function formatTime(durSec) {
-            // change this later to do proper formatting...
-            return durSec;
+            const h = Math.floor(durSec / 3600);
+            const m = Math.floor((durSec % 3600) / 60);
+            const s = (durSec % 60).toFixed(0);
+
+            return [
+                `${h !== 0 ? String(h).padStart(2, '0') + ':' : ''}`,
+                `${String(m)}:`,
+                `${String(s).padStart(2, '0')}`
+            ].join('');
         }
     }
 }

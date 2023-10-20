@@ -21,6 +21,7 @@ export default function Transcript(props) {
                         return (
                             <span key={index}
                                 onClick={e => handleSubtitleClick(index, 1)}
+                                style={{ cursor: 'default' }}
                                 className={(selectedSubtitle === index ? 'selected-subtitle' : 'bg-secondary') + ' display-inline-block border border-black m-1 p-1 rounded'}
                                 data-selectionscope='1'>
                                 {subtitle.lines.map(line => Subtitle.parseLine(line).text).join(' ')}

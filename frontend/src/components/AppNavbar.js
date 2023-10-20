@@ -1,28 +1,75 @@
 import React from 'react';
-import { Navbar, NavDropdown, Nav, Container } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
+import {
+    CContainer,
+    CHeader,
+    CHeaderBrand,
+    CHeaderDivider,
+    CHeaderNav,
+    CHeaderToggler,
+    CNavLink,
+    CNavItem,
+} from '@coreui/react';
+import CIcon from '@coreui/icons-react';
+import { cilBell, cilEnvelopeOpen, cilList, cilMenu } from '@coreui/icons';
 
-export default function AppNavbar() {
+import Breadcrumb from './Breadcrumb.js';
+
+export default function AppNavbar(props) {
+    const { sidebarShow, setSidebarShow } = props;
+
+    function handleClick() {
+        console.log('Clicked');
+        setSidebarShow(!sidebarShow);
+    }
+
     return (
-        <div className='d-flex justify-content-between w-100 bg-body-tertiary mb-4'>
-            <Navbar expand="lg">
-                <Container>
-                    <Navbar.Brand href="#home">React-Bootstrap</Navbar.Brand>
-                </Container>
-            </Navbar>
-            <Navbar expand="lg">
-                <Container>
-                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                    <Navbar.Collapse id="basic-navbar-nav">
-                        <Nav className="me-auto">
-                            <Link to="/app">Dashboard</Link>
-                            <Link to="/app/profile">Profile</Link>
-                            <Link to="/app/settings">Settings</Link>
-                            <Link to="/logout">Logout</Link>
-                        </Nav>
-                    </Navbar.Collapse>
-                </Container>
-            </Navbar>
-        </div>
+        <CHeader position="sticky">
+            <CContainer fluid>
+                <CHeaderToggler
+                    className="ps-1"
+                    onClick={e => handleClick()}
+                >
+                    <CIcon icon={cilMenu} size="lg" />
+                </CHeaderToggler>
+                <CHeaderBrand className="mx-auto d-md-none" to="/">
+                    <img className='LOGO' src='/assets/images/logo.png'></img>
+                </CHeaderBrand>
+                <CHeaderNav className="d-none d-md-flex me-auto">
+                    <CNavItem>
+                        <CNavLink to="/dashboard" component={NavLink}>
+                            Dashboard
+                        </CNavLink>
+                    </CNavItem>
+                    <CNavItem>
+                        <CNavLink href="#">Users</CNavLink>
+                    </CNavItem>
+                    <CNavItem>
+                        <CNavLink href="#">Settings</CNavLink>
+                    </CNavItem>
+                </CHeaderNav>
+                <CHeaderNav>
+                    <CNavItem>
+                        <CNavLink href="#">
+                            <CIcon icon={cilBell} size="lg" />
+                        </CNavLink>
+                    </CNavItem>
+                    <CNavItem>
+                        <CNavLink href="#">
+                            <CIcon icon={cilList} size="lg" />
+                        </CNavLink>
+                    </CNavItem>
+                    <CNavItem>
+                        <CNavLink href="#">
+                            <CIcon icon={cilEnvelopeOpen} size="lg" />
+                        </CNavLink>
+                    </CNavItem>
+                </CHeaderNav>
+            </CContainer>
+            <CHeaderDivider />
+            <CContainer fluid>
+                <Breadcrumb />
+            </CContainer>
+        </CHeader>
     )
 }
