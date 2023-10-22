@@ -1,7 +1,7 @@
 
 
 export function isNil(any) {
-    return any === undefined || any === null || any === NaN;
+    return any === undefined || any === null || isNaN(any);
 }
 
 export function isEmpty(any) {

@@ -110,7 +110,7 @@ export default function ExportPanel(props) {
     }
 
     return (
-        <div>
+        <div data-selectionscope={selectionScope}>
             {exportResults.length > 0
                 ? <div>
                     {exportResults.map((exportResult, index) => {

@@ -7,7 +7,6 @@ import { faUpload, faTextHeight, faTextWidth, faPencilSquare, faUndo } from '@fo
 import { useVideoUpload } from '../contexts/VideoUploadContext';
 import { useSubtitles } from '../contexts/SubtitlesContext';
 import editorOptions from '../config/editorOptions.json';
-import { useHistory } from '../contexts/HistoryContext';
 import Spinner from '../components/Spinner';
 
 export default function Dashboard() {
@@ -17,10 +16,8 @@ export default function Dashboard() {
 
     const { videoFile, setVideoFile, handleFileUpload, videoInfo, setVideoInfo } = useVideoUpload();
     const { subtitlesData, setSubtitlesData, numLines, setNumLines, numWordsPerLine, setNumWordsPerLine, transcribeVideo } = useSubtitles();
-    const { resetStacks } = useHistory();
 
-    const numLinesOptions = editorOptions.numLines;
-    const numWordsPerLineOptions = editorOptions.numWordsPerLine;
+    const {numLines: numLinesOptions, numWordsPerLine: numWordsPerLineOptions} = editorOptions;
 
     const defaultForm = {
         numLines: numLines,
@@ -65,7 +62,6 @@ export default function Dashboard() {
     function handleReset() {
         setVideoFile(null);
         setFormData({ ...defaultForm });
-        resetStacks();
     }
 
     return (
@@ -75,7 +71,7 @@ export default function Dashboard() {
                     ? <Spinner />
                     : <>
                         <Button onClick={e => handleReset()} className='btn btn-brimary'>Reset</Button>
-                        <Editor numLinesOptions={numLinesOptions} numWordsPerLineOptions={numWordsPerLineOptions} />
+                        <Editor />
                     </>
                 : <Card>
                     {error && <Alert variant='danger'>{error}</Alert>}

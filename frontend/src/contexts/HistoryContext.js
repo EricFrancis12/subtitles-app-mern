@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useRef, useContext } from 'react';
 
 const HistoryContext = React.createContext();
 
@@ -7,71 +7,42 @@ export function useHistory() {
 }
 
 export function HistoryProvider({ children }) {
-    const [undoStack, setUndoStack] = useState([]);
-    const [redoStack, setRedoStack] = useState([]);
-    const [activeHistoryItem, setActiveHistoryItem] = useState(null);
+    const MAX_HISTORY_ITEMS = 20;
 
-    function addToUndoStack(historyItem) {
-        setActiveHistoryItem(historyItem);
+    const undoStack = useRef([]);
+    const redoStack = useRef([]);
 
-        if (activeHistoryItem != null) {
-            setUndoStack([...undoStack, activeHistoryItem]);
-        }
+    function addToHistory(historyItem) {
+        redoStack.current = [];
 
-        setRedoStack([]);
+        undoStack.current.push(historyItem);
+        if (undoStack.current.length > MAX_HISTORY_ITEMS) undoStack.current.shift();
+
+        return undoStack.current;
     }
 
     function undo() {
-        if (undoStack.length === 0) return null;
+        if (undoStack.current.length === 0) return null;
 
-        const newUndoStack = [...undoStack];
-        const historyItem = newUndoStack.pop();
-        setUndoStack([...newUndoStack]);
-        setRedoStack([...redoStack, activeHistoryItem]);
-        setActiveHistoryItem(historyItem);
-
-        historyItem.storedStates.forEach(item => {
-            const [state, setState] = item;
-            setState(state);
-        });
+        const historyItem = undoStack.current.pop();
+        redoStack.current.push(historyItem);
 
         return historyItem;
     }
 
     function redo() {
-        if (redoStack.length === 0) return null;
+        if (redoStack.current.length === 0) return null;
 
-        const newRedoStack = [...redoStack];
-        const historyItem = newRedoStack.pop();
-        setUndoStack([...undoStack, activeHistoryItem]);
-        setRedoStack([...newRedoStack]);
-        setActiveHistoryItem(historyItem);
-
-        historyItem.storedStates.forEach(item => {
-            const [state, setState] = item;
-            setState(state);
-        });
+        const historyItem = redoStack.current.pop();
+        undoStack.current.push(historyItem);
 
         return historyItem;
     }
 
-    function resetStacks() {
-        setUndoStack([]);
-        setRedoStack([]);
-        setActiveHistoryItem(null);
-    }
-
     const value = {
-        undoStack,
-        setUndoStack,
-        redoStack,
-        setRedoStack,
-        activeHistoryItem,
-        setActiveHistoryItem,
-        addToUndoStack,
-        resetStacks,
+        addToHistory,
         undo,
-        redo,
+        redo
     };
 
     return (

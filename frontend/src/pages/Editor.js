@@ -3,13 +3,12 @@ import { Button, Form, Tabs, Tab, Accordion } from 'react-bootstrap';
 import { useAuth } from '../contexts/AuthContext';
 import { useVideoUpload } from '../contexts/VideoUploadContext';
 import { useSubtitles } from '../contexts/SubtitlesContext';
-import useHistory from '../hooks/useHistory';
+import useHistoryState from '../hooks/useHistoryState';
 import { Navigate } from 'react-router-dom';
 import defaultEditorSettings from '../config/defaultEditorSettings.json';
 import editorOptions from '../config/editorOptions.json';
 import selectionScopes from '../config/selectionScopes.json';
 import Subtitle from '../models/Subtitle';
-import HistoryItem from '../models/HistoryItem';
 import InputLine from '../components/InputLine';
 import Test from '../components/Test';
 import Timeline from '../components/Timeline';
@@ -25,14 +24,9 @@ import { DEFAULT_STYLE_PANEL } from '../components/StylePanel';
 
 const MAX_NUM_LINES = 4;
 
-export default function Editor(props) {
-    const { numLinesOptions, numWordsPerLineOptions } = props;
-
+export default function Editor() {
     const { userClient } = useAuth();
     const { subtitlesData, setSubtitlesData, numLines, setNumLines, numWordsPerLine, setNumWordsPerLine } = useSubtitles();
-
-    // const [subtitles, setSubtitles, undo, redo] = useHistory([]); // un-comment to use undo/redo system
-    const [subtitles, setSubtitles, undo, redo] = useState([]);
 
     const selectedSubtitleRef = useRef();
     const selectionRef = useRef();
@@ -48,6 +42,25 @@ export default function Editor(props) {
     const [cursorPosition, setCursorPosition] = useState({ index: null, line: null, position: null });
     const [videoTimeSec, setVideoTimeSec] = useState(0);
     const [stylePanel, setStylePanel] = useState(DEFAULT_STYLE_PANEL);
+
+    const [subtitles, setSubtitles, undoSubtitles, redoSubtitles] = useHistoryState([], { deepCopy: true });
+    const [_count, _setCount, _undo, _redo] = useHistoryState(0, { deepCopy: true });
+
+    function handleUndo() {
+        const prevSubtitles = undoSubtitles();
+
+        // if (prevSubtitles) {
+        //     setSubtitles(prevSubtitles);
+        // }
+    }
+
+    function handleRedo() {
+        const nextSubtitles = redoSubtitles();
+
+        // if (nextSubtitles) {
+        //     setSubtitles(nextSubtitles);
+        // }
+    }
 
     function handleSubtitleClick(index, selectionScope = 1) {
         setSelectionScope(selectionScope);
@@ -394,37 +407,17 @@ export default function Editor(props) {
     }
 
     return (
-        <div className='d-flex flex-column justify-items-center align-items-center w-100'>
-            <div className='d-flex justify-items-between align-items-center m-4' style={{ gap: '30px' }}>
-                <div>
-                    <br></br>
-                    <div>
-                        <button onClick={e => undo()}>Undo</button>
-                    </div>
-                    <br></br>
-                    <div>
-                        <button onClick={e => redo()}>Redo</button>
-                    </div>
-                    <br></br>
-                </div>
-                <div>
-                    <p>Selection Scope: {selectionScope}</p>
-                </div>
-                <div>
-                    <Form.Group>
-                        <Form.Label>Change Number of Lines:</Form.Label>
-                        <Form.Select defaultValue={numLines} onChange={(e) => setNumLines(parseInt(e.target.value))} data-selectionscope='1'>
-                            {numLinesOptions.map((option, index) => <option value={option} key={index}>{option}</option>)}
-                        </Form.Select>
-                    </Form.Group>
-                    <Form.Group>
-                        <Form.Label>Change Number of Words Per Line:</Form.Label>
-                        <Form.Select defaultValue={numWordsPerLine} onChange={(e) => setNumWordsPerLine(parseInt(e.target.value))} data-selectionscope='1'>
-                            {numWordsPerLineOptions.map((option, index) => <option value={option} key={index}>{option}</option>)}
-                        </Form.Select>
-                    </Form.Group>
-                </div>
+        <div className='d-flex flex-column justify-items-center align-items-center w-100 gap-4'>
+            <div>
+                <p>Selection Scope: {selectionScope}</p>
             </div>
+            <Button onClick={e => _setCount(_count + 1)}>Increase Count</Button>
+            <StylePanel stylePanel={stylePanel}
+                handleStylePanelChange={handleStylePanelChange}
+                selecitonScope={selectionScope}
+                handleUndo={handleUndo}
+                handleRedo={handleRedo}
+            />
             <div className='d-flex justify-items-between align-items-start flex-wrap'>
                 <div data-selectionscope='1'>
                     <Tabs defaultActiveKey="subtitles">
@@ -471,21 +464,16 @@ export default function Editor(props) {
                         <Tab eventKey="transcript" title="Transcript">
                             <Transcript subtitles={subtitles}
                                 selectedSubtitle={selectedSubtitle}
-                                handleSubtitleClick={handleSubtitleClick} />
+                                handleSubtitleClick={handleSubtitleClick}
+                            />
                         </Tab>
                     </Tabs>
                 </div>
                 <div data-selectionscope={selectionScope}>
-                    <StylePanel stylePanel={stylePanel} handleStylePanelChange={handleStylePanelChange} />
-                    {/* {Object.keys(styleButtons).map((style, index) => {
-                        return (
-                            <div key={index} data-selectionscope={selectionScope}>
-                                <button onClick={e => handleStylePanelChange(style, styleButtons[style].value)}>{styleButtons[style].name}</button>
-                            </div>
-                        )
-                    })} */}
-                    <ExportPanel subtitles={subtitles} globalStylePanel={globalStylePanel.current} selectionScope={selectionScope} />
-                    <Test />
+                    <ExportPanel subtitles={subtitles}
+                        globalStylePanel={globalStylePanel.current}
+                        selectionScope={selectionScope}
+                    />
                 </div>
                 <VideoPlayer subtitles={subtitles}
                     setSubtitles={setSubtitles}
@@ -493,7 +481,8 @@ export default function Editor(props) {
                     setVideoTimeSec={setVideoTimeSec}
                     selectionScope={selectionScope}
                     selectedSubtitle={selectedSubtitle}
-                    handleSubtitleClick={handleSubtitleClick} />
+                    handleSubtitleClick={handleSubtitleClick}
+                />
             </div>
             <Timeline subtitles={subtitles}
                 setSubtitles={setSubtitles}
